@@ -1,12 +1,13 @@
 FROM node:20 AS builder
 WORKDIR /app
 
-# Evita telemetria e força não usar lightningcss nativo
+# Evita telemetria e força não usar lightningcss/oxide nativos
 ENV NEXT_TELEMETRY_DISABLED=1
 ENV TAILWIND_DISABLE_LIGHTNINGCSS=1
 ENV LIGHTNINGCSS_FORCE_WASM=1
+ENV TAILWIND_DISABLE_OXIDE=1
 
-# Instala usando package.json (não usa ci para permitir alias dinâmico)
+# Instala usando package.json (permite alias dinâmico)
 COPY package*.json ./
 RUN npm install && npm install -D lightningcss@npm:lightningcss-wasm@1
 
@@ -21,6 +22,7 @@ ENV NODE_ENV=production
 ENV NEXT_TELEMETRY_DISABLED=1
 ENV TAILWIND_DISABLE_LIGHTNINGCSS=1
 ENV LIGHTNINGCSS_FORCE_WASM=1
+ENV TAILWIND_DISABLE_OXIDE=1
 
 # Copia artefatos de build e runtime
 COPY --from=builder /app/node_modules ./node_modules
