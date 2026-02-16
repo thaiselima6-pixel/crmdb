@@ -1,15 +1,17 @@
 FROM node:20 AS builder
 WORKDIR /app
 
-# Evita telemetria e força não usar lightningcss/oxide nativos
+# Evita telemetria e desativa bindings nativos problemáticos
 ENV NEXT_TELEMETRY_DISABLED=1
 ENV TAILWIND_DISABLE_LIGHTNINGCSS=1
 ENV LIGHTNINGCSS_FORCE_WASM=1
 ENV TAILWIND_DISABLE_OXIDE=1
 
-# Instala usando package.json (permite alias dinâmico)
+# Copia package.json e package-lock.json
 COPY package*.json ./
-RUN npm install && npm install -D lightningcss@npm:lightningcss-wasm@1
+
+# Ignora o package-lock antigo e instala deps do zero (como o erro recomenda)
+RUN rm -f package-lock.json && npm install
 
 # Copia o código e gera Prisma + build
 COPY . .
