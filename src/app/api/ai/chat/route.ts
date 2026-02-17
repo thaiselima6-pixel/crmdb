@@ -2,7 +2,6 @@ import { OpenAI } from 'openai';
 import { NextResponse } from 'next/server';
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
-import { prisma } from "@/lib/prisma";
 
 // Lazy load Anthropic only when needed to prevent crashes if module is missing
 let Anthropic: any;
@@ -33,8 +32,7 @@ export async function POST(req: Request) {
     const session = await getServerSession(authOptions);
     if (!session || !session.user) return new NextResponse("Unauthorized", { status: 401 });
 
-    const workspaceId = (session.user as any).workspaceId;
-    const { messages, context, model = 'gpt' } = await req.json();
+    const { messages, model = 'gpt' } = await req.json();
 
     // ... resto do código igual
     // Se o modelo solicitado for Claude
@@ -69,99 +67,13 @@ export async function POST(req: Request) {
       return NextResponse.json({ role: 'assistant', content });
     }
 
-    // Buscar ou criar conversa
-    let conversation = await prisma.aIConversation.findFirst({
-      where: { workspaceId },
-      orderBy: { updatedAt: 'desc' }
-    });
-
-    if (!conversation) {
-      conversation = await prisma.aIConversation.create({
-        data: { workspaceId }
-      });
-    }
-
-    // Salvar mensagem do usuário
-    const lastUserMessage = messages[messages.length - 1];
-    await prisma.aIMessage.create({
-      data: {
-        conversationId: conversation.id,
-        role: lastUserMessage.role,
-        content: lastUserMessage.content
-      }
-    });
-
-    // Buscar dados reais para o contexto
-    const leadsCount = await prisma.lead.count({ where: { workspaceId } });
-    const hotLeads = await prisma.lead.count({ where: { workspaceId, status: 'HOT' } });
-    const activeClients = await prisma.client.count({ where: { workspaceId, status: 'ACTIVE' } });
-    const activeProjects = await prisma.project.count({ where: { workspaceId, status: 'IN_PROGRESS' } });
-    
-    // Buscar faturamento detalhado
-    const financeData = await prisma.invoice.aggregate({
-      where: { workspaceId, status: 'PAID' },
-      _sum: { amount: true }
-    });
-
-    // Buscar leads recentes para contexto de qualificação
-    const recentLeads = await prisma.lead.findMany({
-      where: { workspaceId },
-      orderBy: { createdAt: 'desc' },
-      take: 5,
-      select: { id: true, name: true, status: true, company: true }
-    });
-
-    // Buscar projetos recentes
-    const recentProjects = await prisma.project.findMany({
-      where: { workspaceId },
-      orderBy: { updatedAt: 'desc' },
-      take: 5,
-      select: { id: true, name: true, status: true }
-    });
-
-    const systemMessage = {
-      role: 'system',
-      content: `Você é um assistente IA integrado ao CRM de uma agência digital. 
-      Você está conversando com ${session.user.name || 'um membro da equipe'}.
-      
-      Dados do workspace atual: 
-      - Total de leads: ${leadsCount} 
-      - Leads quentes: ${hotLeads} 
-      - Clientes ativos: ${activeClients} 
-      - Faturamento total (pago): R$ ${financeData._sum.amount || 0} 
-      - Projetos em andamento: ${activeProjects} 
-      
-      Leads recentes (IDs e Nomes): ${recentLeads.map(l => `${l.name} (${l.id})`).join(', ')}
-      Projetos recentes (IDs e Nomes): ${recentProjects.map(p => `${p.name} (${p.id})`).join(', ')}
-
-      Contexto da página atual: ${context?.path || 'Dashboard'}
-
-      Você pode: 
-      1. Responder perguntas sobre dados do CRM (leads, faturamento, projetos)
-      2. Criar tarefas, atualizar status de leads e projetos, e adicionar tags
-      3. Gerar conteúdo (emails de follow-up, propostas, posts de redes sociais)
-      4. Enviar mensagens WhatsApp (se solicitado com telefone e mensagem)
-      5. Dar insights proativos sobre churn, atrasos e oportunidades de venda
-      
-      Ao atualizar algo, use os IDs fornecidos acima. Se precisar de um ID que não tem, peça ao usuário.`
-    };
-
     const response = await openai.chat.completions.create({
       model: 'gpt-4o',
-      messages: [systemMessage, ...messages],
+      messages,
     });
 
     const message = response.choices[0].message;
-
-    await prisma.aIMessage.create({
-      data: {
-        conversationId: conversation.id,
-        role: 'assistant',
-        content: message.content || ""
-      }
-    });
-
-    return NextResponse.json(message);
+    return NextResponse.json({ content: message.content || "" });
   } catch (error) {
     console.error("AI_CHAT_ERROR", error);
     return new NextResponse("Internal Error", { status: 500 });
