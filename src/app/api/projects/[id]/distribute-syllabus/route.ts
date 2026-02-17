@@ -62,7 +62,7 @@ export async function POST(
     const extractedTasks = result.tasks || [];
 
     const createdTasks = await Promise.all(
-      extractedTasks.map((task: any) => 
+      extractedTasks.map((task: any) =>
         prisma.task.create({
           data: {
             title: task.title,
@@ -70,48 +70,17 @@ export async function POST(
             dueDate: task.dueDate ? new Date(task.dueDate) : null,
             projectId: projectId,
             status: "TODO",
-            priority: "MEDIUM"
-          }
+            priority: "MEDIUM",
+          },
         })
       )
     );
 
-    return NextResponse.json({ 
-      success: true, 
+    return NextResponse.json({
+      success: true,
       count: createdTasks.length,
-      tasks: createdTasks 
+      tasks: createdTasks,
     });
-
-  } catch (error) {
-    console.error("DISTRIBUTE_SYLLABUS_ERROR", error);
-    return new NextResponse("Internal Error", { status: 500 });
-  }
-
-    const result = JSON.parse(response.choices[0].message.content || '{"tasks": []}');
-    const extractedTasks = result.tasks || [];
-
-    // Criar as tarefas no banco de dados
-    const createdTasks = await Promise.all(
-      extractedTasks.map((task: any) => 
-        prisma.task.create({
-          data: {
-            title: task.title,
-            description: task.description,
-            dueDate: task.dueDate ? new Date(task.dueDate) : null,
-            projectId: projectId,
-            status: "TODO",
-            priority: "MEDIUM"
-          }
-        })
-      )
-    );
-
-    return NextResponse.json({ 
-      success: true, 
-      count: createdTasks.length,
-      tasks: createdTasks 
-    });
-
   } catch (error) {
     console.error("DISTRIBUTE_SYLLABUS_ERROR", error);
     return new NextResponse("Internal Error", { status: 500 });
