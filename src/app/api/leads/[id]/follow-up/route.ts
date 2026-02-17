@@ -4,15 +4,22 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-});
-
 export async function POST(
   req: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    if (!process.env.OPENAI_API_KEY) {
+      return NextResponse.json(
+        { success: false, message: "A chave da API da OpenAI não foi configurada. Adicione OPENAI_API_KEY ao ambiente do servidor." },
+        { status: 200 }
+      );
+    }
+
+    const openai = new OpenAI({
+      apiKey: process.env.OPENAI_API_KEY,
+    });
+
     const session = await getServerSession(authOptions);
     if (!session || !session.user) return new NextResponse("Unauthorized", { status: 401 });
 
