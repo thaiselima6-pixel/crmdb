@@ -27,7 +27,7 @@ export async function POST(
     const { id: leadId } = resolvedParams;
     const workspaceId = (session.user as any).workspaceId;
 
-    const lead = await prisma.lead.findUnique({
+    const lead = await prisma.lead.findFirst({
       where: { id: leadId, workspaceId }
     });
 
