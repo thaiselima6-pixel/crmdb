@@ -45,57 +45,53 @@ export function KanbanBoard({ leads, onLeadsChange, onLeadClick }: KanbanBoardPr
     })
   );
 
-  function onDragStart(event: DragStart) {
-    if (event.active.data.current?.type === "Lead") {
-      setActiveLead(event.active.data.current.lead);
+ function onDragStart(event: DragStartEvent) {
+  if (event.active.data.current?.type === "Lead") {
+    setActiveLead(event.active.data.current.lead);
+  }
+}
+
+async function onDragEnd(event: DragEndEvent) {
+  const { active, over } = event;
+  if (!over) return;
+
+  const leadId = active.id as string;
+  const newStatus = over.id as string;
+
+  const lead = leads.find((l) => l.id === leadId);
+  if (lead && lead.status !== newStatus && COLUMNS.some(c => c.id === newStatus)) {
+    const updatedLeads = leads.map((l) =>
+      l.id === leadId ? { ...l, status: newStatus } : l
+    );
+    onLeadsChange(updatedLeads);
+
+    try {
+      await axios.patch("/api/leads", { id: leadId, status: newStatus });
+    } catch (error) {
+      console.error("Failed to update lead status", error);
+      onLeadsChange(leads);
     }
   }
 
-  async function onDragEnd(event: DragEnd) {
-    const { active, over } = event;
-    if (!over) return;
+  setActiveLead(null);
+}
 
-    const leadId = active.id as string;
-    const newStatus = over.id as string;
+function onDragOver(event: DragOverEvent) {
+  const { active, over } = event;
+  if (!over) return;
 
-    const lead = leads.find((l) => l.id === leadId);
-    if (lead && lead.status !== newStatus && COLUMNS.some(c => c.id === newStatus)) {
-      // Update local state first (optimistic update)
-      const updatedLeads = leads.map((l) =>
-        l.id === leadId ? { ...l, status: newStatus } : l
-      );
-      onLeadsChange(updatedLeads);
+  const activeId = active.id;
+  const overId = over.id;
 
-      // Update database
-      try {
-        await axios.patch("/api/leads", { id: leadId, status: newStatus });
-      } catch (error) {
-        console.error("Failed to update lead status", error);
-        // Rollback on error
-        onLeadsChange(leads);
-      }
-    }
+  if (activeId === overId) return;
 
-    setActiveLead(null);
+  const isActiveALead = active.data.current?.type === "Lead";
+  const isOverAColumn = COLUMNS.some((col) => col.id === overId);
+
+  if (isActiveALead && isOverAColumn) {
+    // lógica original
   }
-
-  function onDragOver(event: DragOver) {
-    const { active, over } = event;
-    if (!over) return;
-
-    const activeId = active.id;
-    const overId = over.id;
-
-    if (activeId === overId) return;
-
-    const isActiveALead = active.data.current?.type === "Lead";
-    const isOverAColumn = COLUMNS.some((col) => col.id === overId);
-
-    if (isActiveALead && isOverAColumn) {
-      // Logic handled in onDragEnd for simplicity in this CRM
-    }
-  }
-
+ }
   return (
     <DndContext
       sensors={sensors}
