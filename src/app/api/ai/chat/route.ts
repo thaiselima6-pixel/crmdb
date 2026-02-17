@@ -3,7 +3,6 @@ import { NextResponse } from 'next/server';
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { WhatsAppService } from '@/lib/whatsapp';
 
 // Lazy load Anthropic only when needed to prevent crashes if module is missing
 let Anthropic: any;
@@ -17,90 +16,6 @@ try {
 const anthropic = Anthropic ? new Anthropic({
   apiKey: process.env.ANTHROPIC_API_KEY || '',
 }) : null;
-
-const functions = [
-  {
-    name: 'get_leads_stats',
-    description: 'Retorna estatísticas de leads',
-    parameters: {
-      type: 'object',
-      properties: {
-        status: { type: 'string', enum: ['all', 'hot', 'warm', 'cold'] },
-        period: { type: 'string', enum: ['today', 'week', 'month'] }
-      }
-    }
-  },
-  {
-    name: 'create_task',
-    description: 'Cria uma nova tarefa no projeto',
-    parameters: {
-      type: 'object',
-      properties: {
-        title: { type: 'string' },
-        description: { type: 'string' },
-        dueDate: { type: 'string', format: 'date-time' },
-        projectId: { type: 'string' }
-      },
-      required: ['title', 'projectId']
-    }
-  },
-  {
-    name: 'send_whatsapp',
-    description: 'Envia mensagem WhatsApp via Evolution API',
-    parameters: {
-      type: 'object',
-      properties: {
-        phone: { type: 'string' },
-        message: { type: 'string' }
-      },
-      required: ['phone', 'message']
-    }
-  },
-  {
-    name: 'update_lead_status',
-    description: 'Atualiza o status de um lead',
-    parameters: {
-      type: 'object',
-      properties: {
-        leadId: { type: 'string' },
-        status: { type: 'string', enum: ['NEW', 'CONTACTED', 'QUALIFIED', 'PROPOSAL', 'NEGOTIATION', 'WON', 'LOST'] }
-      },
-      required: ['leadId', 'status']
-    }
-  },
-  {
-    name: 'add_lead_tag',
-    description: 'Adiciona uma tag a um lead',
-    parameters: {
-      type: 'object',
-      properties: {
-        leadId: { type: 'string' },
-        tag: { type: 'string' }
-      },
-      required: ['leadId', 'tag']
-    }
-  },
-  {
-    name: 'update_project_status',
-    description: 'Atualiza o status de um projeto',
-    parameters: {
-      type: 'object',
-      properties: {
-        projectId: { type: 'string' },
-        status: { type: 'string', enum: ['PLANNING', 'IN_PROGRESS', 'REVIEW', 'COMPLETED', 'ON_HOLD'] }
-      },
-      required: ['projectId', 'status']
-    }
-  },
-  {
-    name: 'get_overdue_projects',
-    description: 'Busca projetos com tarefas atrasadas ou prazo vencido',
-    parameters: {
-      type: 'object',
-      properties: {}
-    }
-  }
-];
 
 export async function POST(req: Request) {
   try {
@@ -234,107 +149,9 @@ export async function POST(req: Request) {
     const response = await openai.chat.completions.create({
       model: 'gpt-4o',
       messages: [systemMessage, ...messages],
-      functions,
-      function_call: 'auto',
     });
 
     const message = response.choices[0].message;
-
-    if (message.function_call) {
-      const functionName = message.function_call.name;
-      const functionArgs = JSON.parse(message.function_call.arguments);
-
-      let functionResponse;
-
-      if (functionName === 'get_leads_stats') {
-        const stats = await prisma.lead.groupBy({
-          by: ['status'],
-          where: { workspaceId },
-          _count: true
-        });
-        functionResponse = JSON.stringify(stats);
-      } else if (functionName === 'create_task') {
-        const task = await prisma.task.create({
-          data: {
-            title: functionArgs.title,
-            description: functionArgs.description,
-            dueDate: functionArgs.dueDate ? new Date(functionArgs.dueDate) : null,
-            projectId: functionArgs.projectId,
-          }
-        });
-        functionResponse = JSON.stringify(task);
-      } else if (functionName === 'send_whatsapp') {
-        try {
-          await WhatsAppService.sendMessage(workspaceId, functionArgs.phone, functionArgs.message);
-          functionResponse = JSON.stringify({ success: true, message: "Mensagem enviada com sucesso" });
-        } catch (error: any) {
-          functionResponse = JSON.stringify({ success: false, error: error.message });
-        }
-      } else if (functionName === 'update_lead_status') {
-        const lead = await prisma.lead.update({
-          where: { id: functionArgs.leadId, workspaceId },
-          data: { status: functionArgs.status }
-        });
-        functionResponse = JSON.stringify({ success: true, lead });
-      } else if (functionName === 'add_lead_tag') {
-        const lead = await prisma.lead.findUnique({
-          where: { id: functionArgs.leadId, workspaceId }
-        });
-        if (lead) {
-          const tags = [...new Set([...lead.tags, functionArgs.tag])];
-          const updatedLead = await prisma.lead.update({
-            where: { id: functionArgs.leadId },
-            data: { tags }
-          });
-          functionResponse = JSON.stringify({ success: true, lead: updatedLead });
-        } else {
-          functionResponse = JSON.stringify({ success: false, error: "Lead não encontrado" });
-        }
-      } else if (functionName === 'update_project_status') {
-        const project = await prisma.project.update({
-          where: { id: functionArgs.projectId, workspaceId },
-          data: { status: functionArgs.status }
-        });
-        functionResponse = JSON.stringify({ success: true, project });
-      } else if (functionName === 'get_overdue_projects') {
-        const overdueProjects = await prisma.project.findMany({
-          where: { 
-            workspaceId,
-            OR: [
-              { status: { not: 'COMPLETED' } },
-              { tasks: { some: { status: { not: 'COMPLETED' }, dueDate: { lt: new Date() } } } }
-            ]
-          },
-          include: { tasks: true }
-        });
-        functionResponse = JSON.stringify(overdueProjects);
-      }
-
-      const secondResponse = await openai.chat.completions.create({
-        model: 'gpt-4o',
-        messages: [
-          systemMessage,
-          ...messages,
-          message,
-          {
-            role: 'function',
-            name: functionName,
-            content: functionResponse as string,
-          },
-        ],
-      });
-
-      const assistantMessage = secondResponse.choices[0].message;
-      await prisma.aIMessage.create({
-        data: {
-          conversationId: conversation.id,
-          role: 'assistant',
-          content: assistantMessage.content || ""
-        }
-      });
-
-      return NextResponse.json(assistantMessage);
-    }
 
     await prisma.aIMessage.create({
       data: {
