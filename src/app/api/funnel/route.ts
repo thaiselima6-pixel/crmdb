@@ -12,13 +12,23 @@ export async function GET(req: Request) {
 
     const leads = await prisma.lead.findMany({
       where: { workspaceId },
-      select: { status: true }
+      select: { 
+        id: true,
+        name: true,
+        email: true,
+        phone: true,
+        company: true,
+        value: true,
+        status: true
+      }
     });
 
     const counts: any = {
       NEW: 0,
       CONTACTED: 0,
+      QUALIFIED: 0,
       PROPOSAL: 0,
+      NEGOTIATION: 0,
       WON: 0,
       LOST: 0
     };
