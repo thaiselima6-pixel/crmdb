@@ -255,13 +255,12 @@ export default function FinancePage() {
                   ) : (
                     data.invoices.map((invoice: any, index: number) => (
                       <motion.tr
-                        key={invoice.id}
-                        as={TableRow}
-                        initial={{ opacity: 0, x: -20 }}
-                        animate={{ opacity: 1, x: 0 }}
-                        transition={{ duration: 0.2, delay: index * 0.05 }}
-                        className="hover:bg-muted/50 transition-colors"
-                      >
+                       key={invoice.id}
+                       initial={{ opacity: 0, x: -20 }}
+                       animate={{ opacity: 1, x: 0 }}
+                       transition={{ duration: 0.2, delay: index * 0.05 }}
+                       className="border-b transition-colors hover:bg-muted/50 data-[state=selected]:bg-muted"
+                        >
                         <TableCell className="font-medium">
                           <div className="flex flex-col">
                             <span className="text-[10px] text-muted-foreground uppercase font-mono tracking-tighter">#{invoice.id.substring(0, 8)}</span>
