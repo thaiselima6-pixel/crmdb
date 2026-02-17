@@ -9,11 +9,9 @@ import {
   PointerSensor,
   useSensor,
   useSensors,
-  DragStart,
-  DragOver,
-  DragEnd,
   defaultDropAnimationSideEffects,
 } from "@dnd-kit/core";
+import type { DragStartEvent, DragOverEvent, DragEndEvent } from "@dnd-kit/core";
 import { arrayMove, sortableKeyboardCoordinates } from "@dnd-kit/sortable";
 import { KanbanColumn } from "./kanban-column";
 import { KanbanCard } from "./kanban-card";
