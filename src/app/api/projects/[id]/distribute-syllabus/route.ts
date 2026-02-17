@@ -4,10 +4,6 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-});
-
 export async function POST(
   req: Request,
   { params }: { params: Promise<{ id: string }> }
@@ -27,6 +23,10 @@ export async function POST(
     if (!process.env.OPENAI_API_KEY) {
       return new NextResponse("OpenAI API Key not configured", { status: 500 });
     }
+
+    const openai = new OpenAI({
+      apiKey: process.env.OPENAI_API_KEY,
+    });
 
     const project = await prisma.project.findUnique({
       where: { id: projectId },
@@ -57,6 +57,35 @@ export async function POST(
       ],
       response_format: { type: "json_object" }
     });
+
+    const result = JSON.parse(response.choices[0].message.content || '{"tasks": []}');
+    const extractedTasks = result.tasks || [];
+
+    const createdTasks = await Promise.all(
+      extractedTasks.map((task: any) => 
+        prisma.task.create({
+          data: {
+            title: task.title,
+            description: task.description,
+            dueDate: task.dueDate ? new Date(task.dueDate) : null,
+            projectId: projectId,
+            status: "TODO",
+            priority: "MEDIUM"
+          }
+        })
+      )
+    );
+
+    return NextResponse.json({ 
+      success: true, 
+      count: createdTasks.length,
+      tasks: createdTasks 
+    });
+
+  } catch (error) {
+    console.error("DISTRIBUTE_SYLLABUS_ERROR", error);
+    return new NextResponse("Internal Error", { status: 500 });
+  }
 
     const result = JSON.parse(response.choices[0].message.content || '{"tasks": []}');
     const extractedTasks = result.tasks || [];
