@@ -14,7 +14,10 @@ const STORE: {
 (globalThis as any).__rate_store__ = STORE;
 
 function key(req: NextRequest) {
-  const ip = req.ip ?? req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ?? "0.0.0.0";
+  const ip =
+    req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ??
+    req.headers.get("x-real-ip") ??
+    "0.0.0.0";
   const path = new URL(req.url).pathname;
   return `${ip}:${path}`;
 }
@@ -73,4 +76,3 @@ export function middleware(req: NextRequest) {
 export const config = {
   matcher: ["/((?!_next/static|_next/image|favicon.ico).*)"],
 };
-
