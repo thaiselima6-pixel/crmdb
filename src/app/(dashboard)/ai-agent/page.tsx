@@ -94,7 +94,7 @@ export default function AIAgentPage() {
             <RefreshCcw className="h-4 w-4 mr-2" />
             Atualizar
           </Button>
-          <Button className="bg-blue-600 hover:bg-blue-700">
+          <Button className="bg-blue-600 hover:bg-blue-700" onClick={() => { window.location.href = "/settings"; }}>
             Configurar Assistente
           </Button>
         </div>
