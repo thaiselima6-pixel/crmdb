@@ -3,20 +3,26 @@ import { NextResponse } from 'next/server';
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
 });
 
 export async function POST(req: Request) {
   try {
+    if (!process.env.OPENAI_API_KEY) {
+      return NextResponse.json(
+        { content: "A chave da API da OpenAI não foi configurada. Por favor, adicione OPENAI_API_KEY ao seu arquivo .env" },
+        { status: 200 }
+      );
+    }
+
+    const openai = new OpenAI({
+      apiKey: process.env.OPENAI_API_KEY,
+    });
+
     const session = await getServerSession(authOptions);
     if (!session || !session.user) return new NextResponse("Unauthorized", { status: 401 });
 
-    const { alertType, alertData } = await req.json();
-
-    if (!alertType || !alertData) {
-      return new NextResponse("Missing data", { status: 400 });
-    }
+    const workspaceId = (session.user as any).workspaceId;
+    const { messages, context, model = 'gpt' } = await req.json();
 
     let prompt = "";
     if (alertType === "LEAD_STALE") {
