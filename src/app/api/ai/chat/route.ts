@@ -13,9 +13,6 @@ try {
   console.warn('@anthropic-ai/sdk not found. Claude model will be unavailable.');
 }
 
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-});
 
 const anthropic = Anthropic ? new Anthropic({
   apiKey: process.env.ANTHROPIC_API_KEY || '',
@@ -114,12 +111,17 @@ export async function POST(req: Request) {
       );
     }
 
+    const openai = new OpenAI({
+      apiKey: process.env.OPENAI_API_KEY,
+    });
+
     const session = await getServerSession(authOptions);
     if (!session || !session.user) return new NextResponse("Unauthorized", { status: 401 });
 
     const workspaceId = (session.user as any).workspaceId;
     const { messages, context, model = 'gpt' } = await req.json();
 
+    // ... resto do código igual
     // Se o modelo solicitado for Claude
     if (model === 'claude') {
       if (!anthropic) {
