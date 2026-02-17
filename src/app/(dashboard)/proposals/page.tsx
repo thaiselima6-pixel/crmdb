@@ -473,9 +473,9 @@ Dia 60: Escala de resultados
         .replace(/{{database}}/g, database || "")
         .replace(/{{hosting}}/g, hosting || "")
         .replace(/{{total_weeks}}/g, totalWeeks || "0")
-        .replace(/{{value_30}}/g, (Number(value) * 0.3).toLocaleString('pt-BR', { minimumFractionDigits: 2 }))
-        .replace(/{{value_40}}/g, (Number(value) * 0.4).toLocaleString('pt-BR', { minimumFractionDigits: 2 }))
-        .replace(/{{value_30_final}}/g, (Number(value) * 0.3).toLocaleString('pt-BR', { minimumFractionDigits: 2 }));
+        .replace(/{{value_30}}/g, (Number(pvalue) * 0.3).toLocaleString('pt-BR', { minimumFractionDigits: 2 }))
+        .replace(/{{value_40}}/g, (Number(pvalue) * 0.4).toLocaleString('pt-BR', { minimumFractionDigits: 2 }))
+        .replace(/{{value_30_final}}/g, (Number(pvalue) * 0.3).toLocaleString('pt-BR', { minimumFractionDigits: 2 }));
 
       const response = await axios.post("/api/proposals", {
         title: proposalTitle,
