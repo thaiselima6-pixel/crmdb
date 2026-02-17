@@ -8,11 +8,9 @@ import {
   KeyboardSensor, 
   PointerSensor, 
   useSensor, 
-  useSensors,
-  DragStart,
-  DragOver,
-  DragEnd
+  useSensors
 } from "@dnd-kit/core";
+import type { DragStartEvent, DragOverEvent, DragEndEvent } from "@dnd-kit/core";
 import { 
   arrayMove, 
   SortableContext, 
@@ -107,68 +105,68 @@ export default function FunnelPage() {
     }
   };
 
-  const onDragStart = (event: DragStart) => {
-    setActiveId(event.active.id as string);
-  };
+  const onDragStart = (event: DragStartEvent) => {
+  setActiveId(event.active.id as string);
+};
 
-  const onDragOver = (event: DragOver) => {
-    const { active, over } = event;
-    if (!over) return;
+const onDragOver = (event: DragOverEvent) => {
+  const { active, over } = event;
+  if (!over) return;
 
-    const activeId = active.id as string;
-    const overId = over.id as string;
+  const activeId = active.id as string;
+  const overId = over.id as string;
 
-    const activeContainer = active.data.current?.sortable.containerId || findContainer(activeId);
-    const overContainer = over.data.current?.sortable.containerId || findContainer(overId);
+  const activeContainer = active.data.current?.sortable.containerId || findContainer(activeId);
+  const overContainer = over.data.current?.sortable.containerId || findContainer(overId);
 
-    if (!activeContainer || !overContainer || activeContainer === overContainer) return;
+  if (!activeContainer || !overContainer || activeContainer === overContainer) return;
 
-    setLeads((prev) => {
-      const activeItems = prev[activeContainer];
-      const overItems = prev[overContainer];
+  setLeads((prev) => {
+    const activeItems = prev[activeContainer];
+    const overItems = prev[overContainer];
 
-      const activeIndex = activeItems.findIndex((item) => item.id === activeId);
-      const overIndex = overItems.findIndex((item) => item.id === overId);
+    const activeIndex = activeItems.findIndex((item) => item.id === activeId);
+    const overIndex = overItems.findIndex((item) => item.id === overId);
 
-      let newIndex;
-      if (overId in prev) {
-        newIndex = overItems.length + 1;
-      } else {
-        const isBelowLastItem = over && overIndex === overItems.length - 1;
-        const modifier = isBelowLastItem ? 1 : 0;
-        newIndex = overIndex >= 0 ? overIndex + modifier : overItems.length + 1;
-      }
-
-      return {
-        ...prev,
-        [activeContainer]: [...prev[activeContainer].filter((item) => item.id !== active.id)],
-        [overContainer]: [
-          ...prev[overContainer].slice(0, newIndex),
-          prev[activeContainer][activeIndex],
-          ...prev[overContainer].slice(newIndex, prev[overContainer].length)
-        ]
-      };
-    });
-  };
-
-  const onDragEnd = (event: DragEnd) => {
-    const { active, over } = event;
-    if (!over) return;
-
-    const activeId = active.id as string;
-    const overId = over.id as string;
-
-    const activeContainer = findContainer(activeId);
-    const overContainer = findContainer(overId);
-
-    if (!activeContainer || !overContainer || activeContainer !== overContainer) {
-      if (activeContainer && overContainer) {
-        updateLeadStatus(activeId, overContainer);
-      }
+    let newIndex;
+    if (overId in prev) {
+      newIndex = overItems.length + 1;
+    } else {
+      const isBelowLastItem = over && overIndex === overItems.length - 1;
+      const modifier = isBelowLastItem ? 1 : 0;
+      newIndex = overIndex >= 0 ? overIndex + modifier : overItems.length + 1;
     }
 
-    setActiveId(null);
-  };
+    return {
+      ...prev,
+      [activeContainer]: [...prev[activeContainer].filter((item) => item.id !== active.id)],
+      [overContainer]: [
+        ...prev[overContainer].slice(0, newIndex),
+        prev[activeContainer][activeIndex],
+        ...prev[overContainer].slice(newIndex, prev[overContainer].length)
+      ]
+    };
+  });
+};
+
+const onDragEnd = (event: DragEndEvent) => {
+  const { active, over } = event;
+  if (!over) return;
+
+  const activeId = active.id as string;
+  const overId = over.id as string;
+
+  const activeContainer = findContainer(activeId);
+  const overContainer = findContainer(overId);
+
+  if (!activeContainer || !overContainer || activeContainer !== overContainer) {
+    if (activeContainer && overContainer) {
+      updateLeadStatus(activeId, overContainer);
+    }
+  }
+
+  setActiveId(null);
+};
 
   const findContainer = (id: string) => {
     if (id in leads) return id;
