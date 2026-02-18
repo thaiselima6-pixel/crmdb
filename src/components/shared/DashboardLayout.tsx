@@ -40,8 +40,7 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
   return (
     <div className="flex h-screen bg-background overflow-hidden">
       {/* Sidebar */}
-      <aside className="w-64 border-r flex flex-col shrink-0 bg-black relative">
-        <div className="absolute inset-0 bg-gradient-to-b from-black via-slate-900 to-orange-950/40" />
+      <aside className="w-64 border-r flex flex-col shrink-0 bg-gradient-to-b from-black via-slate-900 to-orange-950/40">
         <div className="relative p-6 border-b border-white/5">
           <div className="flex items-center gap-3">
             <div className="relative h-10 w-10 rounded-full overflow-hidden ring-2 ring-orange-500/60 shadow-lg">
