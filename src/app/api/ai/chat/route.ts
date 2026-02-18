@@ -67,16 +67,27 @@ export async function POST(req: Request) {
       return NextResponse.json({ role: 'assistant', content });
     }
 
-    const response = await openai.chat.completions.create({
-      model: 'gpt-4o',
-      messages,
-    });
+    try {
+      const response = await openai.chat.completions.create({
+        model: 'gpt-4o',
+        messages,
+      });
 
-    const message = response.choices[0].message;
-    return NextResponse.json({ content: message.content || "" });
+      const message = response.choices[0].message;
+      return NextResponse.json({ content: message.content || "" });
+    } catch (err: any) {
+      console.error("AI_CHAT_OPENAI_ERROR", err);
+      return NextResponse.json(
+        { content: "Não consegui falar com o modelo de IA agora. Tente novamente em alguns instantes." },
+        { status: 200 }
+      );
+    }
   } catch (error) {
     console.error("AI_CHAT_ERROR", error);
-    return new NextResponse("Internal Error", { status: 500 });
+    return NextResponse.json(
+      { content: "Ocorreu um erro interno no servidor da IA. Tente novamente em alguns minutos." },
+      { status: 200 }
+    );
   }
 }
 // Force rebuild comment
