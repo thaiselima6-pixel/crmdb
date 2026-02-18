@@ -40,7 +40,7 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
   return (
     <div className="flex h-screen bg-background overflow-hidden">
       {/* Sidebar */}
-      <aside className="w-64 border-r hidden md:flex flex-col shrink-0 bg-black relative">
+      <aside className="w-64 border-r flex flex-col shrink-0 bg-black relative">
         <div className="absolute inset-0 bg-gradient-to-b from-black via-slate-900 to-orange-950/40" />
         <div className="relative p-6 border-b border-white/5">
           <div className="flex items-center gap-3">
@@ -62,13 +62,13 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
                 <Button 
                   variant="ghost"
                   className={cn(
-                    "w-full justify-start gap-2 transition-all duration-200 text-slate-300 hover:text-white",
+                    "w-full justify-start gap-2 transition-all duration-200 text-white",
                     isActive 
-                      ? "bg-orange-500/15 text-white font-medium shadow-md border border-orange-500/30"
-                      : "hover:bg-white/5"
+                      ? "bg-orange-500/20 font-semibold shadow-md border border-orange-500/40"
+                      : "bg-transparent hover:bg-white/10"
                   )}
                 >
-                  <Icon className={cn("h-4 w-4", isActive ? "text-orange-400" : "text-slate-400")} />
+                  <Icon className={cn("h-4 w-4", isActive ? "text-orange-300" : "text-orange-200")} />
                   {item.label}
                 </Button>
               </Link>
