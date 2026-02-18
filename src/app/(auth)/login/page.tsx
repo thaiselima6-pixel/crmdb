@@ -63,7 +63,7 @@ export default function LoginPage() {
           <div className="flex items-center gap-3">
             <div className="relative h-10 w-10 overflow-hidden rounded-full border border-orange-500/60 bg-black/60">
               <Image
-                src="/digital-brain-logo.png"
+                src="/digital_brain_dynamic_1.png"
                 alt="Digital Brain MKT"
                 fill
                 className="object-cover"
@@ -94,7 +94,7 @@ export default function LoginPage() {
               <div className="flex flex-col items-center space-y-3">
                 <div className="relative h-14 w-14 overflow-hidden rounded-2xl border border-orange-500/60 bg-black/60 shadow-[0_0_25px_-5px_rgba(249,115,22,0.9)]">
                   <Image
-                    src="/digital-brain-logo.png"
+                    src="/digital_brain_dynamic_1.png"
                     alt="Digital Brain MKT"
                     fill
                     className="object-cover"

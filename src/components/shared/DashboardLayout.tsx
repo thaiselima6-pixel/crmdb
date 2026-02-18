@@ -45,7 +45,7 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
         <div className="relative p-6 border-b border-white/5">
           <div className="flex items-center gap-3">
             <div className="relative h-10 w-10 rounded-full overflow-hidden ring-2 ring-orange-500/60 shadow-lg">
-              <Image src="/digital-brain-logo.png" alt="Digital Brain" fill className="object-cover" />
+              <Image src="/digital_brain_dynamic_1.png" alt="Digital Brain" fill className="object-cover" />
             </div>
             <div className="flex flex-col">
               <span className="text-lg font-bold text-white tracking-tight">Digital Brain</span>
