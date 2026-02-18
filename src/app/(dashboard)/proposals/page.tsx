@@ -351,6 +351,14 @@ Dia 60: Escala de resultados
     fetchData();
   }, []);
 
+  // Auto-seleciona um template quando abrir o diálogo de proposta
+  useEffect(() => {
+    if (isProposalDialogOpen && !selectedTemplate) {
+      const first = templates[0] || SUGGESTED_TEMPLATES[0] || null;
+      if (first) setSelectedTemplate(first as any);
+    }
+  }, [isProposalDialogOpen, templates.length]);
+
   const fetchData = async () => {
     try {
       setIsLoading(true);
@@ -1001,11 +1009,22 @@ Dia 60: Escala de resultados
                   <Label>Escolher Template</Label>
                   <select 
                     className="w-full p-2 rounded-md border bg-background"
-                    onChange={(e) => setSelectedTemplate(templates.find(t => t.id === e.target.value) || null)}
+                    onChange={(e) => {
+                      const all = [...templates, ...SUGGESTED_TEMPLATES];
+                      const found = all.find(t => t.id === e.target.value) || null;
+                      setSelectedTemplate(found as any);
+                    }}
                   >
                     <option value="">Selecione um template...</option>
+                    {templates.length === 0 && (
+                      <option value="" disabled>Sem templates salvos — use uma Sugestão</option>
+                    )}
                     {templates.map(t => (
                       <option key={t.id} value={t.id}>{t.name}</option>
+                    ))}
+                    <option value="" disabled>— Sugestões —</option>
+                    {SUGGESTED_TEMPLATES.map(t => (
+                      <option key={t.id} value={t.id}>{t.name} (sugestão)</option>
                     ))}
                   </select>
                 </div>
