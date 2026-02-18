@@ -25,12 +25,16 @@ export function InvoiceDialog({ onSuccess }: InvoiceDialogProps) {
   const [isLoading, setIsLoading] = useState(false);
   const [clients, setClients] = useState<any[]>([]);
   const [projects, setProjects] = useState<any[]>([]);
+  const [selectedClientId, setSelectedClientId] = useState<string>("");
+  const [dueDate, setDueDate] = useState<string>("");
   const { toast } = useToast();
 
   useEffect(() => {
     if (open) {
       axios.get("/api/clients").then((res) => setClients(res.data));
       axios.get("/api/projects").then((res) => setProjects(res.data));
+      setSelectedClientId("");
+      setDueDate("");
     }
   }, [open]);
 
@@ -43,7 +47,7 @@ export function InvoiceDialog({ onSuccess }: InvoiceDialogProps) {
       description: formData.get("description"),
       amount: formData.get("amount"),
       status: formData.get("status"),
-      dueDate: formData.get("dueDate"),
+      dueDate: formData.get("dueDate") || dueDate,
       clientId: formData.get("clientId"),
       projectId: formData.get("projectId"),
     };
@@ -91,13 +95,41 @@ export function InvoiceDialog({ onSuccess }: InvoiceDialogProps) {
             </div>
             <div className="space-y-2">
               <Label htmlFor="dueDate" className="text-slate-700 dark:text-slate-300">Vencimento *</Label>
-              <Input id="dueDate" name="dueDate" type="date" required className="bg-transparent" />
+              <Input
+                id="dueDate"
+                name="dueDate"
+                type="date"
+                required
+                className="bg-transparent"
+                value={dueDate}
+                onChange={(e) => setDueDate(e.target.value)}
+              />
             </div>
           </div>
 
           <div className="space-y-2">
             <Label htmlFor="clientId" className="text-slate-700 dark:text-slate-300">Cliente *</Label>
-            <Select name="clientId" required>
+            <Select
+              name="clientId"
+              required
+              value={selectedClientId}
+              onValueChange={(value) => {
+                setSelectedClientId(value);
+                const client = clients.find((c) => c.id === value);
+                if (client && client.billingDay) {
+                  const today = new Date();
+                  let month = today.getMonth();
+                  let year = today.getFullYear();
+                  const billingDay = client.billingDay as number;
+                  if (billingDay < today.getDate()) {
+                    month += 1;
+                  }
+                  const nextDue = new Date(year, month, billingDay);
+                  const iso = nextDue.toISOString().slice(0, 10);
+                  setDueDate(iso);
+                }
+              }}
+            >
               <SelectTrigger className="bg-transparent">
                 <SelectValue placeholder="Selecione o cliente" />
               </SelectTrigger>

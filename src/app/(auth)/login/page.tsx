@@ -3,11 +3,12 @@
 import { useState } from "react";
 import { signIn } from "next-auth/react";
 import { useRouter } from "next/navigation";
+import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { Chrome, Mail, Loader2 } from "lucide-react";
+import { Card, CardContent } from "@/components/ui/card";
+import { Chrome, Loader2 } from "lucide-react";
 import Link from "next/link";
 
 export default function LoginPage() {
@@ -56,113 +57,141 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="container relative h-screen flex-col items-center justify-center grid lg:max-w-none lg:grid-cols-2 lg:px-0">
-      <div className="relative hidden h-full flex-col bg-muted p-10 text-white dark:border-r lg:flex">
-        <div className="absolute inset-0 bg-zinc-900" />
-        <div className="relative z-20 flex items-center text-lg font-medium">
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            className="mr-2 h-6 w-6"
-          >
-            <path d="M15 6v12a3 3 0 1 0 3-3H6a3 3 0 1 0 3 3V6a3 3 0 1 0-3 3h12a3 3 0 1 0-3-3" />
-          </svg>
-          CRM Agência
-        </div>
-        <div className="relative z-20 mt-auto">
-          <blockquote className="space-y-2">
-            <p className="text-lg">
-              "Este CRM mudou a forma como gerencio meus leads e projetos. É rápido, intuitivo e moderno."
-            </p>
-            <footer className="text-sm">Thais Agência Digital</footer>
-          </blockquote>
-        </div>
-      </div>
-      <div className="lg:p-8">
-        <div className="mx-auto flex w-full flex-col justify-center space-y-6 sm:w-[350px]">
-          <div className="flex flex-col space-y-2 text-center">
-            <h1 className="text-2xl font-semibold tracking-tight">
-              Acesse sua conta
-            </h1>
-            <p className="text-sm text-muted-foreground">
-              Entre com seu email para acessar o dashboard
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-950 via-slate-900 to-black text-slate-50">
+      <div className="container grid h-full max-w-5xl grid-cols-1 lg:grid-cols-2 gap-0 lg:gap-10 items-center">
+        <div className="relative hidden lg:flex h-full flex-col justify-between rounded-3xl border border-orange-500/20 bg-gradient-to-br from-orange-500/10 via-slate-950 to-black p-10 shadow-[0_0_60px_-30px_rgba(249,115,22,0.9)]">
+          <div className="flex items-center gap-3">
+            <div className="relative h-10 w-10 overflow-hidden rounded-full border border-orange-500/60 bg-black/60">
+              <Image
+                src="/digital-brain-logo.png"
+                alt="Digital Brain MKT"
+                fill
+                className="object-cover"
+                priority
+              />
+            </div>
+            <div>
+              <p className="text-sm uppercase tracking-[0.18em] text-orange-400/80">
+                Digital Brain
+              </p>
+              <p className="text-lg font-semibold">CRM de Agência</p>
+            </div>
+          </div>
+          <div className="space-y-4 mt-auto">
+            <h2 className="text-3xl font-bold leading-tight">
+              Organize leads, projetos e financeiro em um só lugar.
+            </h2>
+            <p className="text-sm text-slate-300/80 max-w-md">
+              Gestão visual de funil, automações de follow-up com IA e visão
+              financeira da sua recorrência mensal.
             </p>
           </div>
-          
-          <div className="grid gap-6">
-            <form onSubmit={onSubmit}>
-              <div className="grid gap-4">
-                <div className="grid gap-2">
-                  <Label htmlFor="email">Email</Label>
-                  <Input
-                    id="email"
-                    name="email"
-                    placeholder="nome@exemplo.com"
-                    type="email"
-                    autoCapitalize="none"
-                    autoComplete="email"
-                    autoCorrect="off"
-                    disabled={isLoading || isGoogleLoading}
-                    required
+        </div>
+
+        <div className="flex items-center justify-center">
+          <Card className="w-full max-w-md border border-slate-800/70 bg-slate-950/80 backdrop-blur-sm shadow-2xl shadow-black/50">
+            <CardContent className="p-8 space-y-8">
+              <div className="flex flex-col items-center space-y-3">
+                <div className="relative h-14 w-14 overflow-hidden rounded-2xl border border-orange-500/60 bg-black/60 shadow-[0_0_25px_-5px_rgba(249,115,22,0.9)]">
+                  <Image
+                    src="/digital-brain-logo.png"
+                    alt="Digital Brain MKT"
+                    fill
+                    className="object-cover"
+                    priority
                   />
                 </div>
-                <div className="grid gap-2">
-                  <Label htmlFor="password">Senha</Label>
-                  <Input
-                    id="password"
-                    name="password"
-                    type="password"
-                    disabled={isLoading || isGoogleLoading}
-                    required
-                  />
+                <div className="text-center">
+                  <h1 className="text-2xl font-semibold tracking-tight">
+                    Entrar no CRM
+                  </h1>
+                  <p className="text-sm text-slate-400">
+                    Faça login para acessar seu painel da Digital Brain.
+                  </p>
                 </div>
-                <Button disabled={isLoading || isGoogleLoading}>
-                  {isLoading && (
+              </div>
+
+              <div className="space-y-6">
+                <form onSubmit={onSubmit} className="space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="email" className="text-slate-200">
+                      Email
+                    </Label>
+                    <Input
+                      id="email"
+                      name="email"
+                      placeholder="nome@exemplo.com"
+                      type="email"
+                      autoCapitalize="none"
+                      autoComplete="email"
+                      autoCorrect="off"
+                      disabled={isLoading || isGoogleLoading}
+                      required
+                      className="bg-black/40 border-slate-700/80 text-slate-50 placeholder:text-slate-500 focus-visible:ring-orange-500"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="password" className="text-slate-200">
+                      Senha
+                    </Label>
+                    <Input
+                      id="password"
+                      name="password"
+                      type="password"
+                      disabled={isLoading || isGoogleLoading}
+                      required
+                      className="bg-black/40 border-slate-700/80 text-slate-50 placeholder:text-slate-500 focus-visible:ring-orange-500"
+                    />
+                  </div>
+                  <Button
+                    disabled={isLoading || isGoogleLoading}
+                    className="w-full bg-orange-500 hover:bg-orange-500/90 text-white font-medium shadow-[0_0_25px_-5px_rgba(249,115,22,0.9)]"
+                  >
+                    {isLoading && (
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    )}
+                    Entrar com Email
+                  </Button>
+                </form>
+
+                <div className="relative">
+                  <div className="absolute inset-0 flex items-center">
+                    <span className="w-full border-t border-slate-800" />
+                  </div>
+                  <div className="relative flex justify-center text-xs uppercase">
+                    <span className="bg-slate-950/80 px-3 text-slate-500">
+                      Ou continue com
+                    </span>
+                  </div>
+                </div>
+
+                <Button
+                  variant="outline"
+                  type="button"
+                  disabled={isLoading || isGoogleLoading}
+                  onClick={loginWithGoogle}
+                  className="w-full border-slate-700/80 bg-black/40 text-slate-100 hover:bg-black/60"
+                >
+                  {isGoogleLoading ? (
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  ) : (
+                    <Chrome className="mr-2 h-4 w-4" />
                   )}
-                  Entrar com Email
+                  Google
                 </Button>
               </div>
-            </form>
-            <div className="relative">
-              <div className="absolute inset-0 flex items-center">
-                <span className="w-full border-t" />
-              </div>
-              <div className="relative flex justify-center text-xs uppercase">
-                <span className="bg-background px-2 text-muted-foreground">
-                  Ou continue com
-                </span>
-              </div>
-            </div>
-            <Button
-              variant="outline"
-              type="button"
-              disabled={isLoading || isGoogleLoading}
-              onClick={loginWithGoogle}
-            >
-              {isGoogleLoading ? (
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              ) : (
-                <Chrome className="mr-2 h-4 w-4" />
-              )}
-              Google
-            </Button>
-          </div>
-          
-          <p className="px-8 text-center text-sm text-muted-foreground">
-            Não tem uma conta?{" "}
-            <Link
-              href="/register"
-              className="underline underline-offset-4 hover:text-primary"
-            >
-              Cadastre-se
-            </Link>
-          </p>
+
+              <p className="text-center text-xs text-slate-500">
+                Não tem uma conta?{" "}
+                <Link
+                  href="/register"
+                  className="font-medium text-orange-400 hover:text-orange-300 underline underline-offset-4"
+                >
+                  Cadastre-se
+                </Link>
+              </p>
+            </CardContent>
+          </Card>
         </div>
       </div>
     </div>

@@ -4,6 +4,7 @@ generator client {
 
 datasource db {
   provider = "postgresql"
+  url      = env("DATABASE_URL")
 }
 
 model User {
@@ -118,6 +119,8 @@ model Client {
   company     String?
   status      String    @default("ACTIVE")
   mrr         Decimal   @default(0) @db.Decimal(10, 2)
+  billingDay  Int?
+  startDate   DateTime?
   workspaceId String
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt

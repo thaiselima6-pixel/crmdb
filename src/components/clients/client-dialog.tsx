@@ -37,6 +37,9 @@ export function ClientDialog({ onSuccess, client, trigger, open: externalOpen, o
     phone: "",
     company: "",
     logo: "",
+    mrr: "",
+    billingDay: "",
+    startDate: "",
   });
 
   useEffect(() => {
@@ -47,6 +50,9 @@ export function ClientDialog({ onSuccess, client, trigger, open: externalOpen, o
         phone: client.phone || "",
         company: client.company || "",
         logo: client.logo || "",
+        mrr: client.mrr ? String(client.mrr) : "",
+        billingDay: client.billingDay ? String(client.billingDay) : "",
+        startDate: client.startDate ? new Date(client.startDate).toISOString().slice(0, 10) : "",
       });
     } else if (open) {
       setFormData({
@@ -55,6 +61,9 @@ export function ClientDialog({ onSuccess, client, trigger, open: externalOpen, o
         phone: "",
         company: "",
         logo: "",
+        mrr: "",
+        billingDay: "",
+        startDate: "",
       });
     }
   }, [client, open]);
@@ -168,6 +177,46 @@ export function ClientDialog({ onSuccess, client, trigger, open: externalOpen, o
               value={formData.logo}
               onChange={(e) => setFormData({ ...formData, logo: e.target.value })}
             />
+          </div>
+          <div className="grid grid-cols-3 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="mrr" className="text-slate-700 dark:text-slate-300">MRR Mensal (R$)</Label>
+              <Input
+                id="mrr"
+                name="mrr"
+                type="number"
+                step="0.01"
+                placeholder="0,00"
+                className="bg-transparent"
+                value={formData.mrr}
+                onChange={(e) => setFormData({ ...formData, mrr: e.target.value })}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="billingDay" className="text-slate-700 dark:text-slate-300">Dia de Vencimento</Label>
+              <Input
+                id="billingDay"
+                name="billingDay"
+                type="number"
+                min={1}
+                max={31}
+                placeholder="Ex: 5"
+                className="bg-transparent"
+                value={formData.billingDay}
+                onChange={(e) => setFormData({ ...formData, billingDay: e.target.value })}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="startDate" className="text-slate-700 dark:text-slate-300">Data de Entrada</Label>
+              <Input
+                id="startDate"
+                name="startDate"
+                type="date"
+                className="bg-transparent"
+                value={formData.startDate}
+                onChange={(e) => setFormData({ ...formData, startDate: e.target.value })}
+              />
+            </div>
           </div>
           <div className="flex justify-end gap-2 pt-4">
             <Button variant="outline" type="button" onClick={() => setOpen(false)}>

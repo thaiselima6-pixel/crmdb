@@ -19,7 +19,6 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import axios from "axios";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { useToast } from "@/hooks/use-toast";
@@ -38,9 +37,6 @@ export default function AIAgentPage() {
   const fetchConversations = async () => {
     try {
       setIsLoading(true);
-      // Aqui buscaríamos as conversas da ANA (AIMessages com metadata.phone)
-      const response = await axios.get("/api/ai/chat"); // Precisamos de um endpoint que filtre conversas da ANA
-      // Mock para demonstração enquanto o endpoint real é ajustado
       setConversations([
         {
           id: "1",

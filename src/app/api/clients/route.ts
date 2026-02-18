@@ -29,10 +29,20 @@ export async function POST(req: Request) {
 
     const workspaceId = (session.user as any).workspaceId;
     const body = await req.json();
-    const { name, email, company, phone, logo } = body;
+    const { name, email, company, phone, logo, mrr, billingDay, startDate } = body;
 
     const client = await prisma.client.create({
-      data: { name, email, company, phone, logo, workspaceId },
+      data: { 
+        name, 
+        email, 
+        company, 
+        phone, 
+        logo, 
+        workspaceId,
+        mrr: mrr !== undefined && mrr !== null && mrr !== "" ? Number(mrr) : undefined,
+        billingDay: billingDay !== undefined && billingDay !== null && billingDay !== "" ? Number(billingDay) : undefined,
+        startDate: startDate ? new Date(startDate) : undefined,
+      },
     });
 
     return NextResponse.json(client);

@@ -140,7 +140,19 @@ export default function ClientDetailsPage({ params }: { params: Promise<{ id: st
             </div>
             <div className="flex items-center gap-2 text-sm text-muted-foreground">
               <Calendar className="h-4 w-4" />
-              <span>Desde {format(new Date(client.createdAt), "MMMM 'de' yyyy", { locale: ptBR })}</span>
+              <span>
+                Vencimento mensal:{" "}
+                {client.billingDay ? `${client.billingDay} de cada mês` : "não definido"}
+              </span>
+            </div>
+            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+              <Calendar className="h-4 w-4" />
+              <span>
+                Cliente desde{" "}
+                {client.startDate
+                  ? format(new Date(client.startDate), "dd/MM/yyyy", { locale: ptBR })
+                  : format(new Date(client.createdAt), "dd/MM/yyyy", { locale: ptBR })}
+              </span>
             </div>
           </CardContent>
         </Card>
