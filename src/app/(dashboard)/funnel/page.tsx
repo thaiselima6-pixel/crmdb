@@ -30,11 +30,11 @@ import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 
 const STAGES = [
-  { id: "NEW", title: "Novos Leads", color: "bg-blue-500" },
-  { id: "CONTACTED", title: "Contatados", color: "bg-purple-500" },
-  { id: "QUALIFIED", title: "Qualificados", color: "bg-indigo-500" },
-  { id: "PROPOSAL", title: "Proposta", color: "bg-amber-500" },
-  { id: "NEGOTIATION", title: "Negociação", color: "bg-orange-500" },
+  { id: "NEW", title: "Novos Leads", color: "bg-orange-400" },
+  { id: "CONTACTED", title: "Contatados", color: "bg-orange-500" },
+  { id: "QUALIFIED", title: "Qualificados", color: "bg-orange-600" },
+  { id: "PROPOSAL", title: "Proposta", color: "bg-orange-700" },
+  { id: "NEGOTIATION", title: "Negociação", color: "bg-orange-800" },
   { id: "WON", title: "Ganhos", color: "bg-emerald-500" },
 ];
 
@@ -317,12 +317,12 @@ function LeadCard({ lead, isOverlay }: { lead: Lead; isOverlay?: boolean }) {
   return (
     <Card className={cn(
       "border-none shadow-sm hover:shadow-md transition-all cursor-grab active:cursor-grabbing group",
-      isOverlay && "shadow-xl border-2 border-primary rotate-2"
+      isOverlay && "shadow-xl border-2 border-orange-400 rotate-2"
     )}>
       <CardContent className="p-4 space-y-3">
         <div className="flex items-start justify-between gap-2">
           <div className="min-w-0 flex-1">
-            <h4 className="font-bold text-sm group-hover:text-primary transition-colors truncate">
+            <h4 className="font-bold text-sm group-hover:text-orange-600 transition-colors truncate">
               {lead.name}
             </h4>
             <div className="flex items-center gap-1 text-emerald-600 font-bold text-xs mt-0.5">
@@ -332,7 +332,7 @@ function LeadCard({ lead, isOverlay }: { lead: Lead; isOverlay?: boolean }) {
           <Button
             size="icon"
             variant="ghost"
-            className="h-8 w-8 text-primary hover:text-primary hover:bg-primary/10 shrink-0"
+            className="h-8 w-8 text-orange-600 hover:text-orange-600 hover:bg-orange-500/10 shrink-0"
             onClick={handleFollowUp}
             disabled={isGenerating}
           >

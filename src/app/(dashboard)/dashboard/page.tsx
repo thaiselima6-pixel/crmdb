@@ -111,32 +111,32 @@ export default function DashboardPage() {
       value: `R$ ${data?.kpis?.mrr?.toLocaleString('pt-BR') || '0'}`,
       description: "Receita Recorrente Mensal",
       icon: DollarSign,
-      color: "text-emerald-600",
-      bg: "bg-emerald-100/50"
+      color: "text-orange-600",
+      bg: "bg-orange-100/50"
     },
     {
       title: "Novos Clientes",
       value: data?.kpis?.newClients || "0",
       description: "Conquistados este mês",
       icon: Users,
-      color: "text-blue-600",
-      bg: "bg-blue-100/50"
+      color: "text-orange-600",
+      bg: "bg-orange-100/40"
     },
     {
       title: "Taxa de Conversão",
       value: `${data?.kpis?.conversionRate || "0"}%`,
       description: "Leads para Clientes",
       icon: Target,
-      color: "text-purple-600",
-      bg: "bg-purple-100/50"
+      color: "text-orange-600",
+      bg: "bg-orange-100/30"
     },
     {
       title: "Projetos Atrasados",
       value: data?.kpis?.overdueProjects || "0",
       description: "Precisam de atenção",
       icon: AlertCircle,
-      color: data?.kpis?.overdueProjects > 0 ? "text-amber-600" : "text-slate-600",
-      bg: data?.kpis?.overdueProjects > 0 ? "bg-amber-100/50" : "bg-slate-100/50"
+      color: data?.kpis?.overdueProjects > 0 ? "text-amber-600" : "text-orange-600",
+      bg: data?.kpis?.overdueProjects > 0 ? "bg-amber-100/50" : "bg-orange-100/20"
     }
   ];
 
@@ -152,10 +152,18 @@ export default function DashboardPage() {
         {kpis.map((kpi, i) => {
           const Icon = kpi.icon;
           return (
-            <Card key={i} className="border-none shadow-md hover:shadow-lg transition-shadow overflow-hidden group">
+            <Card
+              key={i}
+              className="border border-orange-500/10 bg-gradient-to-br from-orange-50/50 to-transparent dark:from-orange-950/20 dark:to-transparent shadow-lg hover:shadow-xl transition-all overflow-hidden group"
+            >
               <CardContent className="p-6">
                 <div className="flex items-center justify-between">
-                  <div className={cn("p-2 rounded-lg transition-colors", kpi.bg)}>
+                  <div
+                    className={cn(
+                      "p-2 rounded-lg transition-colors ring-1 ring-orange-400/20",
+                      kpi.bg
+                    )}
+                  >
                     <Icon className={cn("h-6 w-6", kpi.color)} />
                   </div>
                 </div>
@@ -172,10 +180,10 @@ export default function DashboardPage() {
 
       {/* Automação e Follow-up */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <Card className="lg:col-span-2 border-none shadow-md overflow-hidden bg-gradient-to-br from-primary/5 to-transparent border border-primary/10">
+        <Card className="lg:col-span-2 shadow-lg overflow-hidden bg-gradient-to-br from-orange-500/10 via-transparent to-transparent border border-orange-500/15">
           <CardHeader>
             <CardTitle className="text-lg font-bold flex items-center gap-2">
-              <Sparkles className="h-5 w-5 text-primary animate-pulse" />
+              <Sparkles className="h-5 w-5 text-orange-500 animate-pulse" />
               Follow-up Inteligente (IA)
             </CardTitle>
             <CardDescription>Alertas automáticos para nunca mais perder uma venda</CardDescription>
@@ -184,11 +192,16 @@ export default function DashboardPage() {
             <div className="space-y-4">
               {alerts.length > 0 ? (
                 alerts.map((alert) => (
-                  <div key={alert.id} className="flex items-center justify-between p-4 rounded-xl bg-background/50 border border-border/50 hover:border-primary/30 transition-all group">
+                  <div
+                    key={alert.id}
+                    className="flex items-center justify-between p-4 rounded-xl bg-background/50 border border-border/50 hover:border-orange-400/30 transition-all group"
+                  >
                     <div className="flex items-center gap-4">
                       <div className={cn(
                         "h-10 w-10 rounded-full flex items-center justify-center shrink-0",
-                        alert.severity === "high" ? "bg-red-100 text-red-600" : "bg-amber-100 text-amber-600"
+                        alert.severity === "high"
+                          ? "bg-red-100 text-red-600"
+                          : "bg-orange-100 text-orange-600"
                       )}>
                         <Zap className="h-5 w-5" />
                       </div>
@@ -199,7 +212,7 @@ export default function DashboardPage() {
                     </div>
                     <Button 
                       size="sm" 
-                      className="gap-2" 
+                      className="gap-2 bg-orange-500 hover:bg-orange-600 text-white shadow-lg shadow-orange-500/20 border border-orange-400/30" 
                       onClick={() => handleGenerateFollowUp(alert)}
                       disabled={isGenerating === alert.id}
                     >
@@ -227,10 +240,10 @@ export default function DashboardPage() {
           </CardContent>
         </Card>
 
-        <Card className="border-none shadow-md overflow-hidden">
+        <Card className="shadow-lg overflow-hidden border border-orange-500/10 bg-gradient-to-br from-orange-50/40 to-transparent dark:from-orange-950/15">
           <CardHeader className="pb-3">
             <CardTitle className="text-lg font-bold flex items-center gap-2">
-              <CheckCircle2 className="h-5 w-5 text-emerald-500" />
+              <CheckCircle2 className="h-5 w-5 text-orange-500" />
               Tarefas de Hoje
             </CardTitle>
             <CardDescription>O que precisa ser feito agora</CardDescription>
@@ -240,7 +253,7 @@ export default function DashboardPage() {
               {data?.todayTasks?.length > 0 ? (
                 data.todayTasks.map((task: any) => (
                   <div key={task.id} className="flex items-start gap-3 p-3 rounded-lg bg-muted/30 hover:bg-muted/50 transition-colors group">
-                    <div className="mt-1 h-2 w-2 rounded-full bg-primary shrink-0" />
+                    <div className="mt-1 h-2 w-2 rounded-full bg-orange-500 shrink-0" />
                     <div className="space-y-1 min-w-0">
                       <p className="text-sm font-semibold truncate leading-none">{task.title}</p>
                       <p className="text-xs text-muted-foreground truncate">{task.project.name}</p>
@@ -253,7 +266,7 @@ export default function DashboardPage() {
                   <p className="text-sm text-muted-foreground font-medium">Nenhuma tarefa para hoje</p>
                 </div>
               )}
-              <Button variant="outline" className="w-full mt-2" asChild>
+              <Button variant="outline" className="w-full mt-2 border-orange-300/50 hover:bg-orange-50/40" asChild>
                 <Link href="/calendar">Ver Calendário Completo</Link>
               </Button>
             </div>
