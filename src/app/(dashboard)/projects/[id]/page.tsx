@@ -31,6 +31,7 @@ import { useToast } from "@/hooks/use-toast";
 import { UploadButton } from "@uploadthing/react";
 import type { OurFileRouter } from "@/app/api/uploadthing/core";
 import { TaskDialog } from "@/components/projects/task-dialog";
+import { ProjectEditDialog } from "@/components/projects/project-edit-dialog";
 import { Textarea } from "@/components/ui/textarea";
 
 const projectStatusMap: any = {
@@ -191,7 +192,13 @@ export default function ProjectDetailsPage({ params }: { params: Promise<{ id: s
             <p className="text-muted-foreground">Cliente: {project.client?.name}</p>
           </div>
           <div className="flex gap-2">
-            <Button variant="outline">Editar Projeto</Button>
+            {/* Editar Projeto */}
+            <ProjectEditDialog 
+              project={project} 
+              onSuccess={fetchProjectDetails}
+              trigger={<Button variant="outline">Editar Projeto</Button>}
+            />
+            {/* Nova Tarefa */}
             <TaskDialog projectId={id} onSuccess={fetchProjectDetails} />
           </div>
         </div>

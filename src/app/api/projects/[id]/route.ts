@@ -47,24 +47,43 @@ export async function PATCH(
     const body = await req.json();
     const { name, description, syllabus, status, priority, budget, startDate, endDate } = body;
 
+    const data: any = {};
+    if (typeof name === "string") data.name = name;
+    if (typeof description === "string" || description === null) data.description = description;
+    if (typeof syllabus === "string" || syllabus === null) data.syllabus = syllabus;
+    if (typeof status === "string") data.status = status;
+    if (typeof priority === "string") data.priority = priority;
+    if (budget !== undefined) {
+      const parsed = typeof budget === "number" ? budget : parseFloat(String(budget).replace(",", "."));
+      if (Number.isNaN(parsed)) {
+        return NextResponse.json({ message: "Orçamento inválido." }, { status: 400 });
+      }
+      data.budget = parsed;
+    }
+    if (startDate) {
+      const d = new Date(startDate);
+      if (isNaN(d.getTime())) {
+        return NextResponse.json({ message: "Data de início inválida." }, { status: 400 });
+      }
+      data.startDate = d;
+    }
+    if (endDate) {
+      const d = new Date(endDate);
+      if (isNaN(d.getTime())) {
+        return NextResponse.json({ message: "Prazo final inválido." }, { status: 400 });
+      }
+      data.endDate = d;
+    }
+
     const project = await prisma.project.update({
       where: { id },
-      data: {
-        name,
-        description,
-        syllabus,
-        status,
-        priority,
-        budget,
-        startDate: startDate ? new Date(startDate) : undefined,
-        endDate: endDate ? new Date(endDate) : undefined,
-      },
+      data,
     });
 
     return NextResponse.json(project);
   } catch (error) {
     console.error("PROJECT_PATCH", error);
-    return new NextResponse("Internal Error", { status: 500 });
+    return NextResponse.json({ message: "Erro ao atualizar projeto.", detail: (error as any)?.message || null }, { status: 500 });
   }
 }
 
