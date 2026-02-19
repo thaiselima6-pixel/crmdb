@@ -88,10 +88,12 @@ export function ClientDialog({ onSuccess, client, trigger, open: externalOpen, o
       }
       setOpen(false);
       onSuccess?.();
-    } catch (error) {
+    } catch (error: any) {
+      const serverMsg = error?.response?.data?.message;
+      const detail = error?.response?.data?.detail || error?.response?.data?.code;
       toast({
         title: "Erro",
-        description: `Ocorreu um erro ao ${client ? 'atualizar' : 'cadastrar'} o cliente.`,
+        description: serverMsg || detail || `Ocorreu um erro ao ${client ? 'atualizar' : 'cadastrar'} o cliente.`,
         variant: "destructive",
       });
     } finally {
@@ -144,7 +146,7 @@ export function ClientDialog({ onSuccess, client, trigger, open: externalOpen, o
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="email" className="text-slate-700 dark:text-slate-300">E-mail</Label>
+              <Label htmlFor="email" className="text-slate-700 dark:text-slate-300">E-mail (opcional)</Label>
               <Input 
                 id="email" 
                 name="email" 
@@ -161,6 +163,7 @@ export function ClientDialog({ onSuccess, client, trigger, open: externalOpen, o
                 id="phone" 
                 name="phone" 
                 placeholder="(11) 99999-9999" 
+                required
                 className="bg-transparent"
                 value={formData.phone}
                 onChange={(e) => setFormData({ ...formData, phone: e.target.value })}

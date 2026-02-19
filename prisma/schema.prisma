@@ -113,7 +113,7 @@ model Lead {
 model Client {
   id          String    @id @default(cuid())
   name        String
-  email       String
+  email       String?
   phone       String?
   company     String?
   status      String    @default("ACTIVE")

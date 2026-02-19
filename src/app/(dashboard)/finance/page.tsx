@@ -62,14 +62,16 @@ export default function FinancePage() {
     try {
       setIsSendingReminders(true);
       const response = await axios.post("/api/finance/reminders");
+      const { processed = 0, attempted = 0, skippedNoPhone = 0 } = response.data || {};
       toast({
         title: "Automação Concluída",
-        description: `${response.data.processed} lembretes foram processados e enviados via WhatsApp.`,
+        description: `${processed} enviados • ${attempted} analisados • ${skippedNoPhone} sem telefone`,
       });
-    } catch (error) {
+    } catch (error: any) {
+      const serverMsg = error?.response?.data?.message;
       toast({
         title: "Erro na Automação",
-        description: "Não foi possível processar os lembretes automáticos.",
+        description: serverMsg || "Não foi possível processar os lembretes automáticos.",
         variant: "destructive",
       });
     } finally {
