@@ -23,6 +23,7 @@ const COLUMNS = [
   { id: "QUALIFIED", title: "Qualificado" },
   { id: "PROPOSAL", title: "Proposta" },
   { id: "NEGOTIATION", title: "Negociação" },
+  { id: "WON", title: "Ganhos" },
 ];
 
 interface KanbanBoardProps {

@@ -121,6 +121,7 @@ export function LeadDialog({ isOpen, onClose, onSuccess, lead }: LeadDialogProps
                     <SelectItem value="QUALIFIED">Qualificado</SelectItem>
                     <SelectItem value="PROPOSAL">Proposta</SelectItem>
                     <SelectItem value="NEGOTIATION">Negociação</SelectItem>
+                    <SelectItem value="WON">Ganhos</SelectItem>
                   </SelectContent>
                 </Select>
               </div>

@@ -32,6 +32,8 @@ const statusMap: any = {
   QUALIFIED: { label: "Qualificado", variant: "success" },
   PROPOSAL: { label: "Proposta", variant: "warning" },
   NEGOTIATION: { label: "Negociação", variant: "primary" },
+  WON: { label: "Ganhos", variant: "success" },
+  LOST: { label: "Perdemos", variant: "destructive" },
 };
 
 export function LeadsTable({ leads, onLeadClick }: LeadsTableProps) {
