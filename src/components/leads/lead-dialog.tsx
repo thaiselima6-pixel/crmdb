@@ -7,8 +7,18 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import axios from "axios";
-import { Loader2, MessageSquare } from "lucide-react";
+import { Loader2, MessageSquare, Trash2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 interface LeadDialogProps {
   isOpen: boolean;
@@ -19,7 +29,32 @@ interface LeadDialogProps {
 
 export function LeadDialog({ isOpen, onClose, onSuccess, lead }: LeadDialogProps) {
   const [isLoading, setIsLoading] = useState(false);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const { toast } = useToast();
+
+  async function handleDelete() {
+    if (!lead?.id) return;
+
+    try {
+      setIsLoading(true);
+      await axios.delete(`/api/leads?id=${lead.id}`);
+      toast({
+        title: "Lead excluído",
+        description: "O lead foi removido com sucesso.",
+      });
+      onSuccess();
+      onClose();
+    } catch (error) {
+      toast({
+        title: "Erro",
+        description: "Não foi possível excluir o lead.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+      setIsDeleteDialogOpen(false);
+    }
+  }
 
   async function handleSendWhatsApp() {
     if (!lead?.phone) return;
@@ -131,19 +166,32 @@ export function LeadDialog({ isOpen, onClose, onSuccess, lead }: LeadDialogProps
               </div>
             </div>
           </div>
-          <DialogFooter className="gap-2 sm:gap-0">
-            {lead?.phone && (
-              <Button 
-                type="button" 
-                variant="outline" 
-                className="gap-2 border-green-500/50 hover:bg-green-500/10 text-green-600 dark:text-green-400"
-                onClick={handleSendWhatsApp}
-                disabled={isLoading}
-              >
-                <MessageSquare className="h-4 w-4" />
-                WhatsApp IA
-              </Button>
-            )}
+          <DialogFooter className="justify-between items-center gap-2 sm:gap-0">
+            <div className="flex gap-2">
+              {lead && (
+                <Button 
+                  type="button" 
+                  variant="destructive" 
+                  size="icon"
+                  onClick={() => setIsDeleteDialogOpen(true)}
+                  disabled={isLoading}
+                >
+                  <Trash2 className="h-4 w-4" />
+                </Button>
+              )}
+              {lead?.phone && (
+                <Button 
+                  type="button" 
+                  variant="outline" 
+                  className="gap-2 border-green-500/50 hover:bg-green-500/10 text-green-600 dark:text-green-400"
+                  onClick={handleSendWhatsApp}
+                  disabled={isLoading}
+                >
+                  <MessageSquare className="h-4 w-4" />
+                  WhatsApp IA
+                </Button>
+              )}
+            </div>
             <div className="flex gap-2">
               <Button type="button" variant="outline" onClick={onClose}>
                 Cancelar
@@ -156,6 +204,32 @@ export function LeadDialog({ isOpen, onClose, onSuccess, lead }: LeadDialogProps
           </DialogFooter>
         </form>
       </DialogContent>
+
+      <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Você tem certeza?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Esta ação não pode ser desfeita. Isso excluirá permanentemente o lead
+              {lead?.name && <strong> {lead.name}</strong>} e todas as notas associadas a ele.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isLoading}>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={(e) => {
+                e.preventDefault();
+                handleDelete();
+              }}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              disabled={isLoading}
+            >
+              {isLoading ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Trash2 className="h-4 w-4 mr-2" />}
+              Excluir
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </Dialog>
   );
 }

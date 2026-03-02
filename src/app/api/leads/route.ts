@@ -98,3 +98,35 @@ export async function PATCH(req: Request) {
     return new NextResponse("Internal Error", { status: 500 });
   }
 }
+
+export async function DELETE(req: Request) {
+  try {
+    const session = await getServerSession(authOptions);
+
+    if (!session || !session.user) {
+      return new NextResponse("Unauthorized", { status: 401 });
+    }
+
+    const { searchParams } = new URL(req.url);
+    const id = searchParams.get("id");
+
+    if (!id) {
+      return new NextResponse("Lead ID is required", { status: 400 });
+    }
+
+    // Primeiro, deletar todas as notas associadas ao lead
+    await prisma.note.deleteMany({
+      where: { leadId: id }
+    });
+
+    // Depois, deletar o lead
+    await prisma.lead.delete({
+      where: { id },
+    });
+
+    return new NextResponse(null, { status: 204 });
+  } catch (error) {
+    console.error("LEADS_DELETE", error);
+    return new NextResponse("Internal Error", { status: 500 });
+  }
+}
