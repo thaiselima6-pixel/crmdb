@@ -9,7 +9,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useSession } from "next-auth/react";
 import axios from "axios";
 import { useToast } from "@/hooks/use-toast";
-import { Building2, User, Bell, Shield, Loader2, Upload, Check, MessageSquare, Zap, LayoutGrid, Plus, Trash2 } from "lucide-react";
+import { Building2, User, Bell, Shield, Loader2, Upload, Check, MessageSquare, Zap, LayoutGrid, Plus, Trash2, Facebook, Search as GoogleIcon } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
 
 export default function SettingsPage() {
@@ -195,6 +195,9 @@ export default function SettingsPage() {
             </TabsTrigger>
             <TabsTrigger value="automations" className="gap-2">
               <Zap className="h-4 w-4" /> Automações
+            </TabsTrigger>
+            <TabsTrigger value="integrations" className="gap-2">
+              <Plus className="h-4 w-4" /> Ads & Integrações
             </TabsTrigger>
           </TabsList>
 
@@ -557,6 +560,48 @@ export default function SettingsPage() {
                       Salvar Configurações de Automação
                     </Button>
                   </form>
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="integrations">
+            <Card className="border-none shadow-md">
+              <CardHeader>
+                <CardTitle>Integrações de Anúncios</CardTitle>
+                <CardDescription>Conecte suas contas de tráfego pago para gerar relatórios automáticos.</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                <div className="grid gap-6">
+                  <div className="flex items-center justify-between p-4 border rounded-xl bg-muted/30">
+                    <div className="flex items-center gap-4">
+                      <div className="h-12 w-12 rounded-full bg-blue-600/10 flex items-center justify-center text-blue-600">
+                        <Facebook className="h-6 w-6" />
+                      </div>
+                      <div>
+                        <p className="font-bold">Meta Ads (Facebook/Instagram)</p>
+                        <p className="text-xs text-muted-foreground">Sincronize campanhas, leads e ROI.</p>
+                      </div>
+                    </div>
+                    <Button variant="outline" size="sm" onClick={() => toast({ title: "Em breve", description: "A integração com Meta Ads está em fase final de homologação." })}>
+                      Conectar
+                    </Button>
+                  </div>
+
+                  <div className="flex items-center justify-between p-4 border rounded-xl bg-muted/30">
+                    <div className="flex items-center gap-4">
+                      <div className="h-12 w-12 rounded-full bg-amber-500/10 flex items-center justify-center text-amber-600">
+                        <GoogleIcon className="h-6 w-6" />
+                      </div>
+                      <div>
+                        <p className="font-bold">Google Ads</p>
+                        <p className="text-xs text-muted-foreground">Importe métricas de busca e display.</p>
+                      </div>
+                    </div>
+                    <Button variant="outline" size="sm" onClick={() => toast({ title: "Em breve", description: "A integração com Google Ads estará disponível na próxima atualização." })}>
+                      Conectar
+                    </Button>
+                  </div>
                 </div>
               </CardContent>
             </Card>

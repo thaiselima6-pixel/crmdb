@@ -481,7 +481,19 @@ Aula 2 - 22/02: Gestão de Redes Sociais
                   onUploadError={(error: Error) => {
                     toast({ title: "Erro no upload", description: error.message, variant: "destructive" });
                   }}
-                  className="ut-button:bg-primary ut-button:ut-readying:bg-primary/50"
+                  content={{
+                    button: ({ ready }) => (
+                      <div className="flex items-center gap-2">
+                        <Plus className="h-4 w-4" />
+                        {ready ? "Anexar Arquivo" : "Carregando..."}
+                      </div>
+                    ),
+                    allowedContent: "Imagens, PDF, Docs (Max 4MB)"
+                  }}
+                  appearance={{
+                    button: "bg-primary text-primary-foreground hover:bg-primary/90 h-10 px-4 py-2 rounded-md text-sm font-medium transition-colors cursor-pointer",
+                    allowedContent: "text-[10px] text-muted-foreground mt-1"
+                  }}
                 />
               </CardHeader>
               <CardContent>

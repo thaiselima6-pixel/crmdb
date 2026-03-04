@@ -4,8 +4,9 @@ import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { BarChart3, TrendingUp, Target, DollarSign, Facebook, Instagram, Search, Download, RefreshCcw } from "lucide-react";
+import { BarChart3, TrendingUp, Target, DollarSign, Facebook, Instagram, Search, Download, RefreshCcw, ExternalLink } from "lucide-react";
 import { cn } from "@/lib/utils";
+import Link from "next/link";
 
 export default function AdsReportsPage() {
   const [isLoading, setIsLoading] = useState(false);
@@ -108,7 +109,11 @@ export default function AdsReportsPage() {
             <div className="text-center">
               <p className="font-bold text-foreground">Conecte sua conta Meta Ads</p>
               <p className="text-sm max-w-sm mx-auto">Para gerar relatórios automáticos, conecte seu Business Manager nas configurações.</p>
-              <Button variant="outline" className="mt-4 border-primary text-primary hover:bg-primary/5">Conectar Conta</Button>
+              <Link href="/settings">
+                <Button variant="outline" className="mt-4 border-primary text-primary hover:bg-primary/5 gap-2">
+                  <ExternalLink className="h-4 w-4" /> Configurar Integração
+                </Button>
+              </Link>
             </div>
           </div>
         </TabsContent>
@@ -121,7 +126,11 @@ export default function AdsReportsPage() {
             <div className="text-center">
               <p className="font-bold text-foreground">Conecte sua conta Google Ads</p>
               <p className="text-sm max-w-sm mx-auto">Para gerar relatórios automáticos, conecte seu Google Ads nas configurações.</p>
-              <Button variant="outline" className="mt-4 border-primary text-primary hover:bg-primary/5">Conectar Conta</Button>
+              <Link href="/settings">
+                <Button variant="outline" className="mt-4 border-primary text-primary hover:bg-primary/5 gap-2">
+                  <ExternalLink className="h-4 w-4" /> Configurar Integração
+                </Button>
+              </Link>
             </div>
           </div>
         </TabsContent>
