@@ -63,7 +63,7 @@ export default function AdsReportsPage() {
 
         <Card className="border-none shadow-md bg-amber-500/5">
           <CardHeader className="pb-2">
-            <CardDescription className="text-xs uppercase font-bold tracking-wider">Cliques</CardTitle>
+            <CardDescription className="text-xs uppercase font-bold tracking-wider">Cliques</CardDescription>
             <CardTitle className="text-2xl flex items-center gap-2 text-amber-600">
               <Target className="h-5 w-5" /> 12.840
             </CardTitle>
@@ -77,7 +77,7 @@ export default function AdsReportsPage() {
 
         <Card className="border-none shadow-md bg-green-500/5">
           <CardHeader className="pb-2">
-            <CardDescription className="text-xs uppercase font-bold tracking-wider">Leads Gerados</CardTitle>
+            <CardDescription className="text-xs uppercase font-bold tracking-wider">Leads Gerados</CardDescription>
             <CardTitle className="text-2xl flex items-center gap-2 text-green-600">
               <Search className="h-5 w-5" /> 184
             </CardTitle>
