@@ -404,6 +404,18 @@ Dia 60: Escala de resultados
     }
   };
 
+  const handleDeleteProposal = async (id: string) => {
+    if (!confirm("Tem certeza que deseja excluir esta proposta?")) return;
+    
+    try {
+      await axios.delete(`/api/proposals?id=${id}`);
+      toast({ title: "Sucesso", description: "Proposta excluída com sucesso" });
+      fetchData();
+    } catch (error) {
+      toast({ title: "Erro", description: "Falha ao excluir proposta", variant: "destructive" });
+    }
+  };
+
   const handleCreateProposal = async () => {
     if (!selectedTemplate) {
       toast({ title: "Erro", description: "Selecione um template", variant: "destructive" });
@@ -1402,7 +1414,10 @@ Dia 60: Escala de resultados
                         }}>
                           <Copy className="mr-2 h-4 w-4" /> Copiar Link
                         </DropdownMenuItem>
-                        <DropdownMenuItem className="text-destructive">
+                        <DropdownMenuItem 
+                          className="text-destructive"
+                          onClick={() => handleDeleteProposal(proposal.id)}
+                        >
                           <Trash2 className="mr-2 h-4 w-4" /> Excluir
                         </DropdownMenuItem>
                       </DropdownMenuContent>

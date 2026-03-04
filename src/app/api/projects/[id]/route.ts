@@ -22,6 +22,12 @@ export async function GET(
       },
       include: {
         client: true,
+        files: {
+          orderBy: { createdAt: "desc" }
+        },
+        notes: {
+          orderBy: { createdAt: "desc" }
+        }
       }
     });
 

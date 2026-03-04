@@ -51,6 +51,8 @@ export default function ProjectDetailsPage({ params }: { params: Promise<{ id: s
   const [isSavingSyllabus, setIsSavingSyllabus] = useState(false);
   const [isDistributing, setIsDistributing] = useState(false);
   const [syllabus, setSyllabus] = useState("");
+  const [note, setNote] = useState("");
+  const [isSavingNote, setIsSavingNote] = useState(false);
   const [selectedTask, setSelectedTask] = useState<any>(null);
   const [isTaskDialogOpen, setIsTaskDialogOpen] = useState(false);
   const { toast } = useToast();
@@ -153,6 +155,62 @@ export default function ProjectDetailsPage({ params }: { params: Promise<{ id: s
       });
     } finally {
       setIsDistributing(false);
+    }
+  };
+
+  const handleFileUpload = async (files: any[]) => {
+    try {
+      for (const file of files) {
+        await axios.post(`/api/projects/${id}/files`, {
+          name: file.name,
+          url: file.url,
+          size: file.size,
+          type: file.type || file.name.split('.').pop()
+        });
+      }
+      toast({ title: "Upload concluído", description: `${files.length} arquivo(s) salvo(s) com sucesso.` });
+      fetchProjectDetails();
+    } catch (error) {
+      toast({
+        title: "Erro",
+        description: "Não foi possível salvar as informações dos arquivos.",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const deleteFile = async (fileId: string) => {
+    try {
+      await axios.delete(`/api/projects/${id}/files`, { data: { id: fileId } });
+      toast({ title: "Arquivo excluído", description: "O arquivo foi removido do projeto." });
+      fetchProjectDetails();
+    } catch (error) {
+      toast({ title: "Erro", description: "Não foi possível excluir o arquivo.", variant: "destructive" });
+    }
+  };
+
+  const saveNote = async () => {
+    if (!note.trim()) return;
+    try {
+      setIsSavingNote(true);
+      await axios.post(`/api/projects/${id}/notes`, { content: note });
+      setNote("");
+      toast({ title: "Nota salva", description: "A anotação foi adicionada ao projeto." });
+      fetchProjectDetails();
+    } catch (error) {
+      toast({ title: "Erro", description: "Não foi possível salvar a nota.", variant: "destructive" });
+    } finally {
+      setIsSavingNote(false);
+    }
+  };
+
+  const deleteNote = async (noteId: string) => {
+    try {
+      await axios.delete(`/api/projects/${id}/notes`, { data: { id: noteId } });
+      toast({ title: "Nota excluída", description: "A anotação foi removida do projeto." });
+      fetchProjectDetails();
+    } catch (error) {
+      toast({ title: "Erro", description: "Não foi possível excluir a nota.", variant: "destructive" });
     }
   };
 
@@ -419,10 +477,7 @@ Aula 2 - 22/02: Gestão de Redes Sociais
                 {/* @ts-ignore */}
                 <UploadButton<OurFileRouter, "projectAttachment">
                   endpoint="projectAttachment"
-                  onClientUploadComplete={(res) => {
-                    toast({ title: "Upload concluído", description: `${res.length} arquivo(s) enviado(s).` });
-                    fetchProjectDetails();
-                  }}
+                  onClientUploadComplete={handleFileUpload}
                   onUploadError={(error: Error) => {
                     toast({ title: "Erro no upload", description: error.message, variant: "destructive" });
                   }}
@@ -431,25 +486,87 @@ Aula 2 - 22/02: Gestão de Redes Sociais
               </CardHeader>
               <CardContent>
                 <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-                  {/* Mock de arquivos para visualização */}
-                  <div className="p-4 rounded-xl border bg-card hover:shadow-md transition-all group relative">
-                    <div className="h-12 w-12 rounded-lg bg-primary/10 flex items-center justify-center mb-3">
-                      <FileText className="h-6 w-6 text-primary" />
+                  {project.files?.length === 0 ? (
+                    <div className="col-span-full py-12 text-center text-muted-foreground italic border-2 border-dashed rounded-xl">
+                      Nenhum arquivo enviado ainda.
                     </div>
-                    <p className="font-bold text-sm truncate">Contrato_Projeto.pdf</p>
-                    <p className="text-[10px] text-muted-foreground">1.2 MB • PDF</p>
-                    <Button variant="ghost" size="icon" className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity text-destructive">
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
-                  </div>
+                  ) : (
+                    project.files?.map((file: any) => (
+                      <div key={file.id} className="p-4 rounded-xl border bg-card hover:shadow-md transition-all group relative">
+                        <div 
+                          className="h-12 w-12 rounded-lg bg-primary/10 flex items-center justify-center mb-3 cursor-pointer"
+                          onClick={() => window.open(file.url, '_blank')}
+                        >
+                          <FileText className="h-6 w-6 text-primary" />
+                        </div>
+                        <p className="font-bold text-sm truncate pr-6" title={file.name}>{file.name}</p>
+                        <p className="text-[10px] text-muted-foreground">
+                          {(file.size / 1024 / 1024).toFixed(2)} MB • {file.type.toUpperCase()}
+                        </p>
+                        <Button 
+                          variant="ghost" 
+                          size="icon" 
+                          className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity text-destructive h-8 w-8"
+                          onClick={() => deleteFile(file.id)}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    ))
+                  )}
                 </div>
               </CardContent>
             </Card>
           </TabsContent>
 
           <TabsContent value="notes" className="pt-4">
-            <Card className="border-none shadow-md h-[400px] flex items-center justify-center text-muted-foreground italic">
-              Espaço para anotações rápidas e brainstorm em breve.
+            <Card className="border-none shadow-md">
+              <CardHeader>
+                <CardTitle>Notas do Projeto</CardTitle>
+                <CardDescription>Anote ideias, decisões ou observações importantes.</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                <div className="flex gap-2">
+                  <Textarea 
+                    placeholder="Digite sua nota aqui..."
+                    className="min-h-[100px] resize-none"
+                    value={note}
+                    onChange={(e) => setNote(e.target.value)}
+                  />
+                  <Button 
+                    className="self-end gap-2"
+                    onClick={saveNote}
+                    disabled={isSavingNote || !note.trim()}
+                  >
+                    {isSavingNote ? <Loader2 className="h-4 w-4 animate-spin" /> : <Plus className="h-4 w-4" />}
+                    Adicionar
+                  </Button>
+                </div>
+
+                <div className="space-y-4">
+                  {project.notes?.length === 0 ? (
+                    <p className="text-center py-8 text-muted-foreground italic">Nenhuma nota adicionada.</p>
+                  ) : (
+                    project.notes?.map((n: any) => (
+                      <div key={n.id} className="p-4 rounded-lg border bg-muted/30 relative group">
+                        <p className="text-sm whitespace-pre-wrap pr-8">{n.content}</p>
+                        <div className="mt-2 flex items-center gap-2 text-[10px] text-muted-foreground">
+                          <Clock className="h-3 w-3" />
+                          {format(new Date(n.createdAt), "PPp", { locale: ptBR })}
+                        </div>
+                        <Button 
+                          variant="ghost" 
+                          size="icon" 
+                          className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity text-destructive h-7 w-7"
+                          onClick={() => deleteNote(n.id)}
+                        >
+                          <Trash2 className="h-3.5 w-3.5" />
+                        </Button>
+                      </div>
+                    ))
+                  )}
+                </div>
+              </CardContent>
             </Card>
           </TabsContent>
         </Tabs>

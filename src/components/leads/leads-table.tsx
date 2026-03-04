@@ -119,8 +119,14 @@ export function LeadsTable({ leads, onLeadClick }: LeadsTableProps) {
                           Editar
                         </DropdownMenuItem>
                         <DropdownMenuSeparator />
-                        <DropdownMenuItem className="text-destructive">
-                          Arquivar Lead
+                        <DropdownMenuItem 
+                          className="text-destructive"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            onLeadClick(lead); // Isso vai abrir o dialog, onde tem o botão de excluir
+                          }}
+                        >
+                          Excluir Lead
                         </DropdownMenuItem>
                       </DropdownMenuContent>
                     </DropdownMenu>

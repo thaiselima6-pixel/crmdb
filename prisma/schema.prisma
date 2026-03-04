@@ -147,6 +147,31 @@ model Project {
   client      Client    @relation(fields: [clientId], references: [id])
   workspace   Workspace @relation(fields: [workspaceId], references: [id])
   tasks       Task[]
+  files       ProjectFile[]
+  notes       ProjectNote[]
+}
+
+model ProjectFile {
+  id          String   @id @default(cuid())
+  name        String
+  url         String
+  size        Int
+  type        String
+  projectId   String
+  workspaceId String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  project     Project  @relation(fields: [projectId], references: [id])
+}
+
+model ProjectNote {
+  id          String   @id @default(cuid())
+  content     String
+  projectId   String
+  workspaceId String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  project     Project  @relation(fields: [projectId], references: [id])
 }
 
 model Task {
