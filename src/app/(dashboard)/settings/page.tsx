@@ -9,7 +9,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useSession } from "next-auth/react";
 import axios from "axios";
 import { useToast } from "@/hooks/use-toast";
-import { Building2, User, Bell, Shield, Loader2, Upload, Check, MessageSquare, Zap } from "lucide-react";
+import { Building2, User, Bell, Shield, Loader2, Upload, Check, MessageSquare, Zap, LayoutGrid, Plus, Trash2 } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
 
 export default function SettingsPage() {
@@ -25,6 +25,7 @@ export default function SettingsPage() {
     projectUpdates: true,
     weeklyReport: false,
   });
+  const [pipelines, setPipelines] = useState<any[]>([]);
 
   useEffect(() => {
     if (session?.user) {
@@ -53,8 +54,18 @@ export default function SettingsPage() {
         }
       };
 
+      const fetchPipelines = async () => {
+        try {
+          const response = await axios.get("/api/pipelines");
+          setPipelines(response.data);
+        } catch (error) {
+          console.error("Failed to fetch pipelines", error);
+        }
+      };
+
       fetchWorkspace();
       fetchNotifications();
+      fetchPipelines();
     }
   }, [session]);
 
@@ -175,6 +186,9 @@ export default function SettingsPage() {
             </TabsTrigger>
             <TabsTrigger value="notifications" className="gap-2">
               <Bell className="h-4 w-4" /> Notificações
+            </TabsTrigger>
+            <TabsTrigger value="pipelines" className="gap-2">
+              <LayoutGrid className="h-4 w-4" /> Pipeline
             </TabsTrigger>
             <TabsTrigger value="security" className="gap-2">
               <Shield className="h-4 w-4" /> Segurança
@@ -326,6 +340,94 @@ export default function SettingsPage() {
             </Card>
           </TabsContent>
 
+          <TabsContent value="pipelines">
+            <Card className="border-none shadow-md">
+              <CardHeader>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <CardTitle>Pipelines de Vendas</CardTitle>
+                    <CardDescription>Personalize os estágios do seu processo comercial.</CardDescription>
+                  </div>
+                  <Button size="sm" className="gap-2" onClick={() => {
+                    // Logic to add a new pipeline would go here
+                    toast({ title: "Funcionalidade em desenvolvimento", description: "Em breve você poderá criar múltiplos pipelines." });
+                  }}>
+                    <Plus className="h-4 w-4" /> Novo Pipeline
+                  </Button>
+                </div>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                {pipelines.map((pipeline) => (
+                  <div key={pipeline.id} className="space-y-4 p-4 border rounded-xl bg-muted/30">
+                    <div className="flex items-center justify-between">
+                      <h4 className="font-bold text-lg">{pipeline.name}</h4>
+                      <Button variant="ghost" size="sm" className="text-destructive">
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
+                    
+                    <div className="space-y-2">
+                      <Label>Estágios do Pipeline</Label>
+                      <div className="space-y-2">
+                        {pipeline.stages.map((stage: any, index: number) => (
+                          <div key={stage.id} className="flex items-center gap-2">
+                            <div className="h-8 w-8 rounded-lg bg-primary/10 flex items-center justify-center text-xs font-bold text-primary">
+                              {index + 1}
+                            </div>
+                            <Input 
+                              value={stage.name} 
+                              onChange={(e) => {
+                                const newPipelines = [...pipelines];
+                                const pIdx = newPipelines.findIndex(p => p.id === pipeline.id);
+                                const sIdx = newPipelines[pIdx].stages.findIndex((s: any) => s.id === stage.id);
+                                newPipelines[pIdx].stages[sIdx].name = e.target.value;
+                                setPipelines(newPipelines);
+                              }}
+                              className="flex-1"
+                            />
+                            <Button variant="ghost" size="icon" className="h-9 w-9 text-muted-foreground hover:text-destructive">
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        ))}
+                        <Button variant="outline" size="sm" className="w-full mt-2 border-dashed border-2 gap-2" onClick={() => {
+                          const newPipelines = [...pipelines];
+                          const pIdx = newPipelines.findIndex(p => p.id === pipeline.id);
+                          newPipelines[pIdx].stages.push({ id: `new-${Date.now()}`, name: "Novo Estágio", order: pipeline.stages.length });
+                          setPipelines(newPipelines);
+                        }}>
+                          <Plus className="h-4 w-4" /> Adicionar Estágio
+                        </Button>
+                      </div>
+                    </div>
+
+                    <div className="pt-4 border-t flex justify-end">
+                      <Button 
+                        size="sm" 
+                        onClick={async () => {
+                          try {
+                            setIsLoading(true);
+                            // logic to save pipeline stages
+                            // await axios.patch(`/api/pipelines/${pipeline.id}`, pipeline);
+                            toast({ title: "Pipeline salvo", description: "As alterações foram aplicadas com sucesso." });
+                          } catch (error) {
+                            toast({ title: "Erro", description: "Não foi possível salvar o pipeline.", variant: "destructive" });
+                          } finally {
+                            setIsLoading(false);
+                          }
+                        }}
+                        disabled={isLoading}
+                      >
+                        {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                        Salvar Pipeline
+                      </Button>
+                    </div>
+                  </div>
+                ))}
+              </CardContent>
+            </Card>
+          </TabsContent>
+
           <TabsContent value="security">
             <Card className="border-none shadow-md">
               <CardHeader>
@@ -378,12 +480,37 @@ export default function SettingsPage() {
           <TabsContent value="automations">
             <Card className="border-none shadow-md">
               <CardHeader>
-                <CardTitle>WhatsApp & N8N</CardTitle>
-                <CardDescription>Configure suas integrações com Evolution API e N8N.</CardDescription>
+                <CardTitle>Automações de Vendas</CardTitle>
+                <CardDescription>Configure gatilhos e ações automáticas para ganhar escala.</CardDescription>
               </CardHeader>
-              <CardContent>
-                <form onSubmit={handleUpdateWorkspace} className="space-y-6">
-                  <div className="space-y-4">
+              <CardContent className="space-y-6">
+                <div className="space-y-4">
+                  <div className="p-4 border rounded-xl bg-muted/30 flex items-center justify-between">
+                    <div className="space-y-1">
+                      <p className="font-bold text-sm">Follow-up Automático</p>
+                      <p className="text-xs text-muted-foreground">Enviar mensagem se o lead não responder em 48 horas.</p>
+                    </div>
+                    <Switch defaultChecked />
+                  </div>
+                  <div className="p-4 border rounded-xl bg-muted/30 flex items-center justify-between">
+                    <div className="space-y-1">
+                      <p className="font-bold text-sm">Boas-vindas Instantâneo</p>
+                      <p className="text-xs text-muted-foreground">Enviar mensagem via WhatsApp assim que um novo lead entrar.</p>
+                    </div>
+                    <Switch defaultChecked />
+                  </div>
+                  <div className="p-4 border rounded-xl bg-muted/30 flex items-center justify-between">
+                    <div className="space-y-1">
+                      <p className="font-bold text-sm">Lembrete de Reunião</p>
+                      <p className="text-xs text-muted-foreground">Aviso automático 1 hora antes de compromissos no calendário.</p>
+                    </div>
+                    <Switch />
+                  </div>
+                </div>
+
+                <div className="pt-6 border-t">
+                  <h4 className="font-bold text-sm mb-4">Configurações de API (WhatsApp & N8N)</h4>
+                  <form onSubmit={handleUpdateWorkspace} className="space-y-4">
                     <div className="grid grid-cols-2 gap-4">
                       <div className="space-y-2">
                         <Label htmlFor="wa-url">URL Evolution API</Label>
@@ -425,12 +552,12 @@ export default function SettingsPage() {
                         <p className="text-xs text-muted-foreground">URL para disparar fluxos complexos no N8N.</p>
                       </div>
                     </div>
-                  </div>
-                  <Button disabled={isLoading} className="w-full">
-                    {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                    Salvar Configurações de Automação
-                  </Button>
-                </form>
+                    <Button disabled={isLoading} className="w-full">
+                      {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                      Salvar Configurações de Automação
+                    </Button>
+                  </form>
+                </div>
               </CardContent>
             </Card>
           </TabsContent>

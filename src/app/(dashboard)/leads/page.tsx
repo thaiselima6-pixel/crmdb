@@ -23,27 +23,41 @@ import {
 
 export default function LeadsPage() {
   const [leads, setLeads] = useState<any[]>([]);
+  const [pipelines, setPipelines] = useState<any[]>([]);
+  const [currentPipeline, setCurrentPipeline] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [selectedLead, setSelectedLead] = useState<any>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilters, setStatusFilters] = useState<string[]>([]);
 
-  const fetchLeads = async () => {
+  const fetchData = async () => {
     try {
       setIsLoading(true);
-      const response = await axios.get("/api/leads");
-      setLeads(response.data);
+      const [leadsRes, pipelinesRes] = await Promise.all([
+        axios.get("/api/leads"),
+        axios.get("/api/pipelines")
+      ]);
+      setLeads(leadsRes.data);
+      setPipelines(pipelinesRes.data);
+      if (pipelinesRes.data.length > 0) {
+        setCurrentPipeline(pipelinesRes.data[0]);
+      }
     } catch (error) {
-      console.error("Failed to fetch leads", error);
+      console.error("Failed to fetch data", error);
     } finally {
       setIsLoading(false);
     }
   };
 
   useEffect(() => {
-    fetchLeads();
+    fetchData();
   }, []);
+
+  const kanbanStages = currentPipeline?.stages?.map((s: any) => ({
+    id: s.id,
+    title: s.name
+  })) || null;
 
   const filteredLeads = leads.filter((lead) => {
     const matchesSearch = 
@@ -204,6 +218,7 @@ export default function LeadsPage() {
                 leads={filteredLeads} 
                 onLeadsChange={setLeads} 
                 onLeadClick={handleEditLead}
+                stages={kanbanStages}
               />
             )}
           </TabsContent>
@@ -224,7 +239,7 @@ export default function LeadsPage() {
       <LeadDialog
         isOpen={isDialogOpen}
         onClose={() => setIsDialogOpen(false)}
-        onSuccess={fetchLeads}
+        onSuccess={fetchData}
         lead={selectedLead}
       />
     </div>

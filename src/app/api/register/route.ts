@@ -29,6 +29,34 @@ export async function POST(req: Request) {
         },
       });
 
+      // Criar Pipeline padrão
+      const pipeline = await tx.pipeline.create({
+        data: {
+          name: "Vendas",
+          workspaceId: workspace.id,
+        }
+      });
+
+      // Criar Estágios do Pipeline
+      const stages = [
+        { name: "Novo", order: 0 },
+        { name: "Contatado", order: 1 },
+        { name: "Qualificado", order: 2 },
+        { name: "Proposta", order: 3 },
+        { name: "Negociação", order: 4 },
+        { name: "Ganhos", order: 5 },
+      ];
+
+      for (const stage of stages) {
+        await tx.pipelineStage.create({
+          data: {
+            name: stage.name,
+            order: stage.order,
+            pipelineId: pipeline.id,
+          }
+        });
+      }
+
       const user = await tx.user.create({
         data: {
           name,

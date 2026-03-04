@@ -17,23 +17,24 @@ import { KanbanColumn } from "./kanban-column";
 import { KanbanCard } from "./kanban-card";
 import axios from "axios";
 
-const COLUMNS = [
-  { id: "NEW", title: "Novo" },
-  { id: "CONTACTED", title: "Contatado" },
-  { id: "QUALIFIED", title: "Qualificado" },
-  { id: "PROPOSAL", title: "Proposta" },
-  { id: "NEGOTIATION", title: "Negociação" },
-  { id: "WON", title: "Ganhos" },
-];
-
 interface KanbanBoardProps {
   leads: any[];
   onLeadsChange: (newLeads: any[]) => void;
   onLeadClick: (lead: any) => void;
+  stages?: any[];
 }
 
-export function KanbanBoard({ leads, onLeadsChange, onLeadClick }: KanbanBoardProps) {
+export function KanbanBoard({ leads, onLeadsChange, onLeadClick, stages }: KanbanBoardProps) {
   const [activeLead, setActiveLead] = useState<any>(null);
+
+  const COLUMNS = stages || [
+    { id: "NEW", title: "Novo" },
+    { id: "CONTACTED", title: "Contatado" },
+    { id: "QUALIFIED", title: "Qualificado" },
+    { id: "PROPOSAL", title: "Proposta" },
+    { id: "NEGOTIATION", title: "Negociação" },
+    { id: "WON", title: "Ganhos" },
+  ];
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -57,17 +58,21 @@ async function onDragEnd(event: DragEndEvent) {
   if (!over) return;
 
   const leadId = active.id as string;
-  const newStatus = over.id as string;
+  const newStageId = over.id as string;
 
   const lead = leads.find((l) => l.id === leadId);
-  if (lead && lead.status !== newStatus && COLUMNS.some(c => c.id === newStatus)) {
+  if (lead && (lead.stageId !== newStageId || lead.status !== newStageId) && COLUMNS.some(c => c.id === newStageId)) {
     const updatedLeads = leads.map((l) =>
-      l.id === leadId ? { ...l, status: newStatus } : l
+      l.id === leadId ? { ...l, stageId: newStageId, status: newStageId } : l
     );
     onLeadsChange(updatedLeads);
 
     try {
-      await axios.patch("/api/leads", { id: leadId, status: newStatus });
+      await axios.patch("/api/leads", { 
+        id: leadId, 
+        stageId: newStageId,
+        status: newStageId 
+      });
     } catch (error) {
       console.error("Failed to update lead status", error);
       onLeadsChange(leads);

@@ -1,93 +1,77 @@
-import { OpenAI } from 'openai';
-import { NextResponse } from 'next/server';
+import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
-
-// Lazy load Anthropic only when needed to prevent crashes if module is missing
-let Anthropic: any;
-try {
-  Anthropic = require('@anthropic-ai/sdk').Anthropic;
-} catch (e) {
-  console.warn('@anthropic-ai/sdk not found. Claude model will be unavailable.');
-}
-
-
-const anthropic = Anthropic ? new Anthropic({
-  apiKey: process.env.ANTHROPIC_API_KEY || '',
-}) : null;
+import { prisma } from "@/lib/prisma";
+import axios from "axios";
 
 export async function POST(req: Request) {
   try {
-    if (!process.env.OPENAI_API_KEY) {
-      return NextResponse.json(
-        { content: "A chave da API da OpenAI não foi configurada. Por favor, adicione OPENAI_API_KEY ao seu arquivo .env" },
-        { status: 200 }
-      );
-    }
-
-    const openai = new OpenAI({
-      apiKey: process.env.OPENAI_API_KEY,
-    });
-
     const session = await getServerSession(authOptions);
     if (!session || !session.user) return new NextResponse("Unauthorized", { status: 401 });
 
-    const { messages, model = 'gpt' } = await req.json();
+    const workspaceId = (session.user as any).workspaceId;
+    const body = await req.json();
+    const { phone, message } = body;
 
-    // ... resto do código igual
-    // Se o modelo solicitado for Claude
-    if (model === 'claude') {
-      if (!anthropic) {
-        return NextResponse.json(
-          { content: "O suporte ao Claude (Anthropic) não está instalado ou configurado no servidor." },
-          { status: 200 }
-        );
-      }
-      if (!process.env.ANTHROPIC_API_KEY) {
-        return NextResponse.json(
-          { content: "A chave da API da Anthropic não foi configurada. Por favor, adicione ANTHROPIC_API_KEY ao seu arquivo .env" },
-          { status: 200 }
-        );
-      }
-
-      const response = await anthropic.messages.create({
-        model: "claude-3-5-sonnet-20240620",
-        max_tokens: 4000,
-        system: `Você é um assistente IA especializado em criação de conteúdo para uma agência digital. 
-        Você está conversando com ${session.user.name || 'um membro da equipe'}.
-        Use um tom profissional, criativo e focado em conversão.`,
-        messages: messages.map((m: any) => ({
-          role: m.role === 'assistant' ? 'assistant' : 'user',
-          content: m.content
-        })),
-      });
-
-      const content = response.content[0].type === 'text' ? response.content[0].text : '';
-
-      return NextResponse.json({ role: 'assistant', content });
+    if (!phone || !message) {
+      return new NextResponse("Phone and message are required", { status: 400 });
     }
 
-    try {
-      const response = await openai.chat.completions.create({
-        model: 'gpt-4o',
-        messages,
-      });
+    // Buscar workspace para obter credenciais de WhatsApp
+    const workspace = await prisma.workspace.findUnique({
+      where: { id: workspaceId }
+    });
 
-      const message = response.choices[0].message;
-      return NextResponse.json({ content: message.content || "" });
-    } catch (err: any) {
-      console.error("AI_CHAT_OPENAI_ERROR", err);
-      return NextResponse.json(
-        { content: "Não consegui falar com o modelo de IA agora. Tente novamente em alguns instantes." },
-        { status: 200 }
-      );
+    if (!workspace) return new NextResponse("Workspace not found", { status: 404 });
+
+    // Se tiver Evolution API configurada, tenta enviar mensagem real
+    if (workspace.whatsappUrl && workspace.whatsappApiKey && workspace.whatsappInstance) {
+      try {
+        await axios.post(`${workspace.whatsappUrl}/message/sendText/${workspace.whatsappInstance}`, {
+          number: phone,
+          text: message
+        }, {
+          headers: { "apikey": workspace.whatsappApiKey }
+        });
+      } catch (waError) {
+        console.error("FAILED_TO_SEND_WHATSAPP", waError);
+        // Mesmo se falhar o envio real, vamos registrar no banco
+      }
     }
+
+    // Registrar na conversa (mesma lógica do webhook)
+    let conversation = await prisma.aIConversation.findFirst({
+      where: { workspaceId, phone },
+      orderBy: { updatedAt: "desc" }
+    });
+
+    if (!conversation) {
+      conversation = await prisma.aIConversation.create({
+        data: { 
+          workspaceId,
+          phone,
+          title: `Conversa com ${phone}`
+        }
+      });
+    }
+
+    const newMessage = await prisma.aIMessage.create({
+      data: {
+        conversationId: conversation.id,
+        role: "user", // Representando o usuário do CRM enviando
+        content: message,
+        metadata: { phone, sentBy: "crm_user" }
+      }
+    });
+
+    await prisma.aIConversation.update({
+      where: { id: conversation.id },
+      data: { updatedAt: new Date() }
+    });
+
+    return NextResponse.json(newMessage);
   } catch (error) {
-    console.error("AI_CHAT_ERROR", error);
-    return NextResponse.json(
-      { content: "Ocorreu um erro interno no servidor da IA. Tente novamente em alguns minutos." },
-      { status: 200 }
-    );
+    console.error("AI_CHAT_POST", error);
+    return new NextResponse("Internal Error", { status: 500 });
   }
 }
-// Force rebuild comment
