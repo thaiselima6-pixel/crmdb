@@ -14,7 +14,9 @@ import {
   LogOut,
   Bot,
   MessageSquare,
-  BarChart3
+  BarChart3,
+  LayoutGrid,
+  Zap
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
