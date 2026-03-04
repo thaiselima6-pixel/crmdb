@@ -30,6 +30,7 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
   const menuItems = [
     { label: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
     { label: "Leads", href: "/leads", icon: Users },
+    { label: "Pipeline", href: "/pipeline-settings", icon: LayoutGrid },
     { label: "Contatos & Chat", href: "/contacts", icon: MessageSquare },
     { label: "Funil de Vendas", href: "/funnel", icon: Layers },
     { label: "Clientes", href: "/clients", icon: Users },
@@ -38,6 +39,7 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
     { label: "Calendário", href: "/calendar", icon: Calendar },
     { label: "Financeiro", href: "/finance", icon: DollarSign },
     { label: "Relatórios de Ads", href: "/ads-reports", icon: BarChart3 },
+    { label: "Integrações", href: "/integrations", icon: Zap },
     { label: "Maya Assistente", href: "/ai-agent", icon: Bot },
   ];
 

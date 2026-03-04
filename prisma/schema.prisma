@@ -61,6 +61,20 @@ model Workspace {
   whatsappUrl              String?
   reminderTemplateOverdue  String?            @default("Olá {{client_name}}! Identificamos que sua fatura no valor de R$ {{valor}} com vencimento em {{due_date}} ainda não foi quitada. Por favor, regularize sua situação.")
   reminderTemplateUpcoming String?            @default("Olá {{client_name}}! Lembramos que sua fatura no valor de R$ {{valor}} vence em {{due_date}}. Evite multas efetuando o pagamento em dia.")
+  
+  // Integrações de Ads
+  metaAdsEnabled           Boolean?           @default(false)
+  metaAdsPixelId           String?
+  metaAdsToken             String?
+  googleAdsEnabled         Boolean?           @default(false)
+  googleAdsCustomerId      String?
+  googleAdsDeveloperToken  String?
+
+  // Automações
+  autoFollowUpEnabled      Boolean?           @default(true)
+  autoWelcomeEnabled       Boolean?           @default(true)
+  meetingRemindersEnabled  Boolean?           @default(false)
+
   aiConversations          AIConversation[]
   clients                  Client[]
   invoices                 Invoice[]

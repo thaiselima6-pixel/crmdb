@@ -109,7 +109,7 @@ export default function AdsReportsPage() {
             <div className="text-center">
               <p className="font-bold text-foreground">Conecte sua conta Meta Ads</p>
               <p className="text-sm max-w-sm mx-auto">Para gerar relatórios automáticos, conecte seu Business Manager nas configurações.</p>
-              <Link href="/settings?tab=integrations">
+              <Link href="/integrations">
                 <Button variant="outline" className="mt-4 border-primary text-primary hover:bg-primary/5 gap-2">
                   <ExternalLink className="h-4 w-4" /> Configurar Integração
                 </Button>
@@ -126,7 +126,7 @@ export default function AdsReportsPage() {
             <div className="text-center">
               <p className="font-bold text-foreground">Conecte sua conta Google Ads</p>
               <p className="text-sm max-w-sm mx-auto">Para gerar relatórios automáticos, conecte seu Google Ads nas configurações.</p>
-              <Link href="/settings?tab=integrations">
+              <Link href="/integrations">
                 <Button variant="outline" className="mt-4 border-primary text-primary hover:bg-primary/5 gap-2">
                   <ExternalLink className="h-4 w-4" /> Configurar Integração
                 </Button>

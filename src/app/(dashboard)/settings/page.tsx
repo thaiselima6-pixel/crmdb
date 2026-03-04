@@ -9,16 +9,12 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useSession } from "next-auth/react";
 import axios from "axios";
 import { useToast } from "@/hooks/use-toast";
-import { Building2, User, Bell, Shield, Loader2, Upload, Check, MessageSquare, Zap, LayoutGrid, Plus, Trash2, Facebook, Search as GoogleIcon } from "lucide-react";
+import { Building2, User, Bell, Shield, Loader2, Upload, Check, MessageSquare, Zap, LayoutGrid, Plus, Trash2 } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
-import { useSearchParams } from "next/navigation";
 
 function SettingsContent() {
   const { data: session, update } = useSession();
   const { toast } = useToast();
-  const searchParams = useSearchParams();
-  const initialTab = searchParams.get("tab") || "profile";
-
   const [isLoading, setIsLoading] = useState(false);
   const [workspaceData, setWorkspaceData] = useState<any>({ name: "", logo: "" });
   const [userData, setUserData] = useState<any>({ name: "", email: "" });
@@ -29,7 +25,6 @@ function SettingsContent() {
     projectUpdates: true,
     weeklyReport: false,
   });
-  const [pipelines, setPipelines] = useState<any[]>([]);
 
   useEffect(() => {
     if (session?.user) {
@@ -58,18 +53,8 @@ function SettingsContent() {
         }
       };
 
-      const fetchPipelines = async () => {
-        try {
-          const response = await axios.get("/api/pipelines");
-          setPipelines(response.data);
-        } catch (error) {
-          console.error("Failed to fetch pipelines", error);
-        }
-      };
-
       fetchWorkspace();
       fetchNotifications();
-      fetchPipelines();
     }
   }, [session]);
 
@@ -180,7 +165,7 @@ function SettingsContent() {
           <p className="text-muted-foreground">Gerencie sua conta e as configurações da agência.</p>
         </div>
 
-        <Tabs defaultValue={initialTab} className="space-y-6">
+        <Tabs defaultValue="profile" className="space-y-6">
           <TabsList className="bg-muted/50 p-1">
             <TabsTrigger value="profile" className="gap-2">
               <User className="h-4 w-4" /> Perfil
@@ -191,17 +176,8 @@ function SettingsContent() {
             <TabsTrigger value="notifications" className="gap-2">
               <Bell className="h-4 w-4" /> Notificações
             </TabsTrigger>
-            <TabsTrigger value="pipelines" className="gap-2">
-              <LayoutGrid className="h-4 w-4" /> Pipeline
-            </TabsTrigger>
             <TabsTrigger value="security" className="gap-2">
               <Shield className="h-4 w-4" /> Segurança
-            </TabsTrigger>
-            <TabsTrigger value="automations" className="gap-2">
-              <Zap className="h-4 w-4" /> Automações
-            </TabsTrigger>
-            <TabsTrigger value="integrations" className="gap-2">
-              <Plus className="h-4 w-4" /> Ads & Integrações
             </TabsTrigger>
           </TabsList>
 
@@ -347,94 +323,6 @@ function SettingsContent() {
             </Card>
           </TabsContent>
 
-          <TabsContent value="pipelines">
-            <Card className="border-none shadow-md">
-              <CardHeader>
-                <div className="flex items-center justify-between">
-                  <div>
-                    <CardTitle>Pipelines de Vendas</CardTitle>
-                    <CardDescription>Personalize os estágios do seu processo comercial.</CardDescription>
-                  </div>
-                  <Button size="sm" className="gap-2" onClick={() => {
-                    // Logic to add a new pipeline would go here
-                    toast({ title: "Funcionalidade em desenvolvimento", description: "Em breve você poderá criar múltiplos pipelines." });
-                  }}>
-                    <Plus className="h-4 w-4" /> Novo Pipeline
-                  </Button>
-                </div>
-              </CardHeader>
-              <CardContent className="space-y-6">
-                {pipelines.map((pipeline) => (
-                  <div key={pipeline.id} className="space-y-4 p-4 border rounded-xl bg-muted/30">
-                    <div className="flex items-center justify-between">
-                      <h4 className="font-bold text-lg">{pipeline.name}</h4>
-                      <Button variant="ghost" size="sm" className="text-destructive">
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    </div>
-                    
-                    <div className="space-y-2">
-                      <Label>Estágios do Pipeline</Label>
-                      <div className="space-y-2">
-                        {pipeline.stages.map((stage: any, index: number) => (
-                          <div key={stage.id} className="flex items-center gap-2">
-                            <div className="h-8 w-8 rounded-lg bg-primary/10 flex items-center justify-center text-xs font-bold text-primary">
-                              {index + 1}
-                            </div>
-                            <Input 
-                              value={stage.name} 
-                              onChange={(e) => {
-                                const newPipelines = [...pipelines];
-                                const pIdx = newPipelines.findIndex(p => p.id === pipeline.id);
-                                const sIdx = newPipelines[pIdx].stages.findIndex((s: any) => s.id === stage.id);
-                                newPipelines[pIdx].stages[sIdx].name = e.target.value;
-                                setPipelines(newPipelines);
-                              }}
-                              className="flex-1"
-                            />
-                            <Button variant="ghost" size="icon" className="h-9 w-9 text-muted-foreground hover:text-destructive">
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
-                          </div>
-                        ))}
-                        <Button variant="outline" size="sm" className="w-full mt-2 border-dashed border-2 gap-2" onClick={() => {
-                          const newPipelines = [...pipelines];
-                          const pIdx = newPipelines.findIndex(p => p.id === pipeline.id);
-                          newPipelines[pIdx].stages.push({ id: `new-${Date.now()}`, name: "Novo Estágio", order: pipeline.stages.length });
-                          setPipelines(newPipelines);
-                        }}>
-                          <Plus className="h-4 w-4" /> Adicionar Estágio
-                        </Button>
-                      </div>
-                    </div>
-
-                    <div className="pt-4 border-t flex justify-end">
-                      <Button 
-                        size="sm" 
-                        onClick={async () => {
-                          try {
-                            setIsLoading(true);
-                            // logic to save pipeline stages
-                            // await axios.patch(`/api/pipelines/${pipeline.id}`, pipeline);
-                            toast({ title: "Pipeline salvo", description: "As alterações foram aplicadas com sucesso." });
-                          } catch (error) {
-                            toast({ title: "Erro", description: "Não foi possível salvar o pipeline.", variant: "destructive" });
-                          } finally {
-                            setIsLoading(false);
-                          }
-                        }}
-                        disabled={isLoading}
-                      >
-                        {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                        Salvar Pipeline
-                      </Button>
-                    </div>
-                  </div>
-                ))}
-              </CardContent>
-            </Card>
-          </TabsContent>
-
           <TabsContent value="security">
             <Card className="border-none shadow-md">
               <CardHeader>
@@ -484,208 +372,11 @@ function SettingsContent() {
             </Card>
           </TabsContent>
 
-          <TabsContent value="automations">
-            <Card className="border-none shadow-md">
-              <CardHeader>
-                <CardTitle>Automações de Vendas</CardTitle>
-                <CardDescription>Configure gatilhos e ações automáticas para ganhar escala.</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-6">
-                <div className="space-y-4">
-                  <div className="p-4 border rounded-xl bg-muted/30 flex items-center justify-between">
-                    <div className="space-y-1">
-                      <p className="font-bold text-sm">Follow-up Automático</p>
-                      <p className="text-xs text-muted-foreground">Enviar mensagem se o lead não responder em 48 horas.</p>
-                    </div>
-                    <Switch defaultChecked />
-                  </div>
-                  <div className="p-4 border rounded-xl bg-muted/30 flex items-center justify-between">
-                    <div className="space-y-1">
-                      <p className="font-bold text-sm">Boas-vindas Instantâneo</p>
-                      <p className="text-xs text-muted-foreground">Enviar mensagem via WhatsApp assim que um novo lead entrar.</p>
-                    </div>
-                    <Switch defaultChecked />
-                  </div>
-                  <div className="p-4 border rounded-xl bg-muted/30 flex items-center justify-between">
-                    <div className="space-y-1">
-                      <p className="font-bold text-sm">Lembrete de Reunião</p>
-                      <p className="text-xs text-muted-foreground">Aviso automático 1 hora antes de compromissos no calendário.</p>
-                    </div>
-                    <Switch />
-                  </div>
-                </div>
-
-                <div className="pt-6 border-t">
-                  <h4 className="font-bold text-sm mb-4">Configurações de API (WhatsApp & N8N)</h4>
-                  <form onSubmit={handleUpdateWorkspace} className="space-y-4">
-                    <div className="grid grid-cols-2 gap-4">
-                      <div className="space-y-2">
-                        <Label htmlFor="wa-url">URL Evolution API</Label>
-                        <Input 
-                          id="wa-url" 
-                          placeholder="https://api.sua-instancia.com"
-                          value={workspaceData.whatsappUrl || ""} 
-                          onChange={(e) => setWorkspaceData({ ...workspaceData, whatsappUrl: e.target.value })}
-                        />
-                      </div>
-                      <div className="space-y-2">
-                        <Label htmlFor="wa-key">API Key</Label>
-                        <Input 
-                          id="wa-key" 
-                          type="password"
-                          value={workspaceData.whatsappApiKey || ""} 
-                          onChange={(e) => setWorkspaceData({ ...workspaceData, whatsappApiKey: e.target.value })}
-                        />
-                      </div>
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="wa-instance">Nome da Instância</Label>
-                      <Input 
-                        id="wa-instance" 
-                        placeholder="ex: agencial_whatsapp"
-                        value={workspaceData.whatsappInstance || ""} 
-                        onChange={(e) => setWorkspaceData({ ...workspaceData, whatsappInstance: e.target.value })}
-                      />
-                    </div>
-                    <div className="pt-4 border-t">
-                      <div className="space-y-2">
-                        <Label htmlFor="n8n-url">Webhook N8N (Opcional)</Label>
-                        <Input 
-                          id="n8n-url" 
-                          placeholder="https://n8n.seu-servidor.com/webhook/..."
-                          value={workspaceData.n8nWebhookUrl || ""} 
-                          onChange={(e) => setWorkspaceData({ ...workspaceData, n8nWebhookUrl: e.target.value })}
-                        />
-                        <p className="text-xs text-muted-foreground">URL para disparar fluxos complexos no N8N.</p>
-                      </div>
-                    </div>
-                    <Button disabled={isLoading} className="w-full">
-                      {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                      Salvar Configurações de Automação
-                    </Button>
-                  </form>
-                </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          <TabsContent value="integrations">
-            <Card className="border-none shadow-md">
-              <CardHeader>
-                <CardTitle>Integrações de Anúncios</CardTitle>
-                <CardDescription>Conecte suas contas de tráfego pago para gerar relatórios automáticos.</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-6">
-                <form onSubmit={handleUpdateWorkspace} className="space-y-6">
-                  <div className="grid gap-6">
-                    {/* Meta Ads Section */}
-                    <div className="p-4 border rounded-xl bg-muted/30 space-y-4">
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-4">
-                          <div className="h-12 w-12 rounded-full bg-blue-600/10 flex items-center justify-center text-blue-600">
-                            <Facebook className="h-6 w-6" />
-                          </div>
-                          <div>
-                            <p className="font-bold">Meta Ads (Facebook/Instagram)</p>
-                            <p className="text-xs text-muted-foreground">Configure seu Pixel e Access Token.</p>
-                          </div>
-                        </div>
-                        <Switch 
-                          checked={!!workspaceData.metaAdsEnabled} 
-                          onCheckedChange={(checked) => setWorkspaceData({ ...workspaceData, metaAdsEnabled: checked })}
-                        />
-                      </div>
-                      
-                      {workspaceData.metaAdsEnabled && (
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2 animate-in slide-in-from-top-2 duration-300">
-                          <div className="space-y-2">
-                            <Label htmlFor="meta-pixel">ID do Pixel / BM</Label>
-                            <Input 
-                              id="meta-pixel" 
-                              placeholder="ex: 1234567890"
-                              value={workspaceData.metaAdsPixelId || ""} 
-                              onChange={(e) => setWorkspaceData({ ...workspaceData, metaAdsPixelId: e.target.value })}
-                            />
-                          </div>
-                          <div className="space-y-2">
-                            <Label htmlFor="meta-token">Access Token</Label>
-                            <Input 
-                              id="meta-token" 
-                              type="password"
-                              placeholder="EAAB..."
-                              value={workspaceData.metaAdsToken || ""} 
-                              onChange={(e) => setWorkspaceData({ ...workspaceData, metaAdsToken: e.target.value })}
-                            />
-                          </div>
-                        </div>
-                      )}
-                    </div>
-
-                    {/* Google Ads Section */}
-                    <div className="p-4 border rounded-xl bg-muted/30 space-y-4">
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-4">
-                          <div className="h-12 w-12 rounded-full bg-amber-500/10 flex items-center justify-center text-amber-600">
-                            <GoogleIcon className="h-6 w-6" />
-                          </div>
-                          <div>
-                            <p className="font-bold">Google Ads</p>
-                            <p className="text-xs text-muted-foreground">Configure seu Customer ID e Developer Token.</p>
-                          </div>
-                        </div>
-                        <Switch 
-                          checked={!!workspaceData.googleAdsEnabled} 
-                          onCheckedChange={(checked) => setWorkspaceData({ ...workspaceData, googleAdsEnabled: checked })}
-                        />
-                      </div>
-
-                      {workspaceData.googleAdsEnabled && (
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2 animate-in slide-in-from-top-2 duration-300">
-                          <div className="space-y-2">
-                            <Label htmlFor="google-id">Customer ID</Label>
-                            <Input 
-                              id="google-id" 
-                              placeholder="xxx-xxx-xxxx"
-                              value={workspaceData.googleAdsCustomerId || ""} 
-                              onChange={(e) => setWorkspaceData({ ...workspaceData, googleAdsCustomerId: e.target.value })}
-                            />
-                          </div>
-                          <div className="space-y-2">
-                            <Label htmlFor="google-token">Developer Token</Label>
-                            <Input 
-                              id="google-token" 
-                              type="password"
-                              placeholder="Token da API"
-                              value={workspaceData.googleAdsDeveloperToken || ""} 
-                              onChange={(e) => setWorkspaceData({ ...workspaceData, googleAdsDeveloperToken: e.target.value })}
-                            />
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                  
-                  <Button disabled={isLoading} className="w-full">
-                    {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                    Salvar Configurações de Ads
-                  </Button>
-                </form>
-              </CardContent>
-            </Card>
-          </TabsContent>
         </Tabs>
     </div>
   );
 }
 
 export default function SettingsPage() {
-  return (
-    <Suspense fallback={
-      <div className="p-8 flex justify-center">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
-      </div>
-    }>
-      <SettingsContent />
-    </Suspense>
-  );
+  return <SettingsContent />;
 }
