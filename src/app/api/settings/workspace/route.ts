@@ -20,7 +20,18 @@ export async function GET(req: Request) {
         whatsappUrl: true,
         whatsappApiKey: true,
         whatsappInstance: true,
-        n8nWebhookUrl: true
+        n8nWebhookUrl: true,
+        metaAdsEnabled: true,
+        metaAdsPixelId: true,
+        metaAdsToken: true,
+        metaAdsAccountName: true,
+        googleAdsEnabled: true,
+        googleAdsCustomerId: true,
+        googleAdsDeveloperToken: true,
+        googleAdsAccountName: true,
+        autoFollowUpEnabled: true,
+        autoWelcomeEnabled: true,
+        meetingRemindersEnabled: true
       }
     });
 
@@ -48,6 +59,14 @@ export async function PATCH(req: Request) {
         whatsappApiKey: body.whatsappApiKey,
         whatsappInstance: body.whatsappInstance,
         n8nWebhookUrl: body.n8nWebhookUrl,
+        metaAdsEnabled: body.metaAdsEnabled,
+        metaAdsPixelId: body.metaAdsPixelId,
+        googleAdsEnabled: body.googleAdsEnabled,
+        googleAdsCustomerId: body.googleAdsCustomerId,
+        googleAdsDeveloperToken: body.googleAdsDeveloperToken,
+        autoFollowUpEnabled: body.autoFollowUpEnabled,
+        autoWelcomeEnabled: body.autoWelcomeEnabled,
+        meetingRemindersEnabled: body.meetingRemindersEnabled,
       }
     });
 

@@ -7,13 +7,28 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, Facebook, Search as GoogleIcon, Zap, MessageSquare } from "lucide-react";
+import { Loader2, Facebook, Search as GoogleIcon, Zap, MessageSquare, Link2, Unlink } from "lucide-react";
 import axios from "axios";
+import { useSearchParams } from "next/navigation";
+import { Suspense } from "react";
 
-export default function IntegrationsPage() {
+function IntegrationsContent() {
   const { toast } = useToast();
+  const searchParams = useSearchParams();
   const [isLoading, setIsLoading] = useState(false);
   const [workspaceData, setWorkspaceData] = useState<any>(null);
+
+  useEffect(() => {
+    const success = searchParams.get("success");
+    const error = searchParams.get("error");
+
+    if (success) {
+      toast({ title: "Conectado!", description: `Sua conta do ${success === 'meta' ? 'Meta' : 'Google'} Ads foi vinculada com sucesso.` });
+    }
+    if (error) {
+      toast({ title: "Erro na conexão", description: `Não foi possível conectar ao ${error === 'meta' ? 'Meta' : 'Google'} Ads.`, variant: "destructive" });
+    }
+  }, [searchParams, toast]);
 
   const fetchWorkspace = async () => {
     try {
@@ -30,6 +45,24 @@ export default function IntegrationsPage() {
   useEffect(() => {
     fetchWorkspace();
   }, []);
+
+  const handleConnectAds = (provider: 'meta' | 'google') => {
+    // Redireciona para a rota de conexão OAuth
+    window.location.href = `/api/auth/connect/${provider}`;
+  };
+
+  const handleDisconnectAds = async (provider: 'meta' | 'google') => {
+    try {
+      setIsLoading(true);
+      await axios.post(`/api/auth/disconnect/${provider}`);
+      toast({ title: "Desconectado", description: `Sua conta do ${provider === 'meta' ? 'Meta' : 'Google'} Ads foi desconectada.` });
+      fetchWorkspace();
+    } catch (error) {
+      toast({ title: "Erro", description: "Não foi possível desconectar a conta.", variant: "destructive" });
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   const handleUpdateWorkspace = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
@@ -93,26 +126,33 @@ export default function IntegrationsPage() {
                   />
                 </div>
                 
+                <div className="pt-2">
+                  {workspaceData.metaAdsToken ? (
+                    <div className="flex items-center justify-between p-2 rounded-lg bg-green-500/10 border border-green-500/20">
+                      <div className="flex items-center gap-2">
+                        <div className="h-2 w-2 rounded-full bg-green-500 animate-pulse" />
+                        <span className="text-xs font-medium text-green-700">Conectado: {workspaceData.metaAdsAccountName || 'Conta Meta'}</span>
+                      </div>
+                      <Button variant="ghost" size="sm" className="h-7 text-[10px] gap-1 text-destructive hover:text-destructive hover:bg-destructive/10" onClick={() => handleDisconnectAds('meta')}>
+                        <Unlink className="h-3 w-3" /> Desconectar
+                      </Button>
+                    </div>
+                  ) : (
+                    <Button variant="outline" size="sm" className="w-full gap-2 text-xs border-blue-600/30 text-blue-600 hover:bg-blue-600/5" onClick={() => handleConnectAds('meta')}>
+                      <Link2 className="h-3.5 w-3.5" /> Conectar Conta Meta
+                    </Button>
+                  )}
+                </div>
+
                 {workspaceData.metaAdsEnabled && (
                   <div className="space-y-3 pt-2 animate-in slide-in-from-top-2 duration-300">
                     <div className="space-y-1">
-                      <Label htmlFor="meta-pixel" className="text-xs">ID do Pixel / BM</Label>
+                      <Label htmlFor="meta-pixel" className="text-xs">ID da Conta de Anúncios</Label>
                       <Input 
                         id="meta-pixel" 
-                        placeholder="ex: 1234567890"
+                        placeholder="act_1234567890"
                         value={workspaceData.metaAdsPixelId || ""} 
                         onChange={(e) => setWorkspaceData({ ...workspaceData, metaAdsPixelId: e.target.value })}
-                        className="h-8 text-xs"
-                      />
-                    </div>
-                    <div className="space-y-1">
-                      <Label htmlFor="meta-token" className="text-xs">Access Token</Label>
-                      <Input 
-                        id="meta-token" 
-                        type="password"
-                        placeholder="EAAB..."
-                        value={workspaceData.metaAdsToken || ""} 
-                        onChange={(e) => setWorkspaceData({ ...workspaceData, metaAdsToken: e.target.value })}
                         className="h-8 text-xs"
                       />
                     </div>
@@ -136,6 +176,24 @@ export default function IntegrationsPage() {
                     checked={!!workspaceData.googleAdsEnabled} 
                     onCheckedChange={(checked) => setWorkspaceData({ ...workspaceData, googleAdsEnabled: checked })}
                   />
+                </div>
+
+                <div className="pt-2">
+                  {workspaceData.googleAdsToken ? (
+                    <div className="flex items-center justify-between p-2 rounded-lg bg-green-500/10 border border-green-500/20">
+                      <div className="flex items-center gap-2">
+                        <div className="h-2 w-2 rounded-full bg-green-500 animate-pulse" />
+                        <span className="text-xs font-medium text-green-700">Conectado: {workspaceData.googleAdsAccountName || 'Conta Google'}</span>
+                      </div>
+                      <Button variant="ghost" size="sm" className="h-7 text-[10px] gap-1 text-destructive hover:text-destructive hover:bg-destructive/10" onClick={() => handleDisconnectAds('google')}>
+                        <Unlink className="h-3 w-3" /> Desconectar
+                      </Button>
+                    </div>
+                  ) : (
+                    <Button variant="outline" size="sm" className="w-full gap-2 text-xs border-amber-500/30 text-amber-600 hover:bg-amber-500/5" onClick={() => handleConnectAds('google')}>
+                      <Link2 className="h-3.5 w-3.5" /> Conectar Conta Google
+                    </Button>
+                  )}
                 </div>
 
                 {workspaceData.googleAdsEnabled && (
@@ -264,5 +322,13 @@ export default function IntegrationsPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function IntegrationsPage() {
+  return (
+    <Suspense fallback={<div className="p-8 flex justify-center"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>}>
+      <IntegrationsContent />
+    </Suspense>
   );
 }

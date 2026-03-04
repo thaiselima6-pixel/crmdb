@@ -66,9 +66,11 @@ model Workspace {
   metaAdsEnabled           Boolean?           @default(false)
   metaAdsPixelId           String?
   metaAdsToken             String?
+  metaAdsAccountName       String?
   googleAdsEnabled         Boolean?           @default(false)
   googleAdsCustomerId      String?
   googleAdsDeveloperToken  String?
+  googleAdsAccountName     String?
 
   // Automações
   autoFollowUpEnabled      Boolean?           @default(true)
