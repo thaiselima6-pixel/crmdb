@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -11,10 +11,14 @@ import axios from "axios";
 import { useToast } from "@/hooks/use-toast";
 import { Building2, User, Bell, Shield, Loader2, Upload, Check, MessageSquare, Zap, LayoutGrid, Plus, Trash2, Facebook, Search as GoogleIcon } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
+import { useSearchParams } from "next/navigation";
 
-export default function SettingsPage() {
+function SettingsContent() {
   const { data: session, update } = useSession();
   const { toast } = useToast();
+  const searchParams = useSearchParams();
+  const initialTab = searchParams.get("tab") || "profile";
+
   const [isLoading, setIsLoading] = useState(false);
   const [workspaceData, setWorkspaceData] = useState<any>({ name: "", logo: "" });
   const [userData, setUserData] = useState<any>({ name: "", email: "" });
@@ -176,7 +180,7 @@ export default function SettingsPage() {
           <p className="text-muted-foreground">Gerencie sua conta e as configurações da agência.</p>
         </div>
 
-        <Tabs defaultValue="profile" className="space-y-6">
+        <Tabs defaultValue={initialTab} className="space-y-6">
           <TabsList className="bg-muted/50 p-1">
             <TabsTrigger value="profile" className="gap-2">
               <User className="h-4 w-4" /> Perfil
@@ -572,41 +576,116 @@ export default function SettingsPage() {
                 <CardDescription>Conecte suas contas de tráfego pago para gerar relatórios automáticos.</CardDescription>
               </CardHeader>
               <CardContent className="space-y-6">
-                <div className="grid gap-6">
-                  <div className="flex items-center justify-between p-4 border rounded-xl bg-muted/30">
-                    <div className="flex items-center gap-4">
-                      <div className="h-12 w-12 rounded-full bg-blue-600/10 flex items-center justify-center text-blue-600">
-                        <Facebook className="h-6 w-6" />
+                <form onSubmit={handleUpdateWorkspace} className="space-y-6">
+                  <div className="grid gap-6">
+                    {/* Meta Ads Section */}
+                    <div className="p-4 border rounded-xl bg-muted/30 space-y-4">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-4">
+                          <div className="h-12 w-12 rounded-full bg-blue-600/10 flex items-center justify-center text-blue-600">
+                            <Facebook className="h-6 w-6" />
+                          </div>
+                          <div>
+                            <p className="font-bold">Meta Ads (Facebook/Instagram)</p>
+                            <p className="text-xs text-muted-foreground">Configure seu Pixel e Access Token.</p>
+                          </div>
+                        </div>
+                        <Switch 
+                          checked={!!workspaceData.metaAdsEnabled} 
+                          onCheckedChange={(checked) => setWorkspaceData({ ...workspaceData, metaAdsEnabled: checked })}
+                        />
                       </div>
-                      <div>
-                        <p className="font-bold">Meta Ads (Facebook/Instagram)</p>
-                        <p className="text-xs text-muted-foreground">Sincronize campanhas, leads e ROI.</p>
-                      </div>
+                      
+                      {workspaceData.metaAdsEnabled && (
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2 animate-in slide-in-from-top-2 duration-300">
+                          <div className="space-y-2">
+                            <Label htmlFor="meta-pixel">ID do Pixel / BM</Label>
+                            <Input 
+                              id="meta-pixel" 
+                              placeholder="ex: 1234567890"
+                              value={workspaceData.metaAdsPixelId || ""} 
+                              onChange={(e) => setWorkspaceData({ ...workspaceData, metaAdsPixelId: e.target.value })}
+                            />
+                          </div>
+                          <div className="space-y-2">
+                            <Label htmlFor="meta-token">Access Token</Label>
+                            <Input 
+                              id="meta-token" 
+                              type="password"
+                              placeholder="EAAB..."
+                              value={workspaceData.metaAdsToken || ""} 
+                              onChange={(e) => setWorkspaceData({ ...workspaceData, metaAdsToken: e.target.value })}
+                            />
+                          </div>
+                        </div>
+                      )}
                     </div>
-                    <Button variant="outline" size="sm" onClick={() => toast({ title: "Em breve", description: "A integração com Meta Ads está em fase final de homologação." })}>
-                      Conectar
-                    </Button>
-                  </div>
 
-                  <div className="flex items-center justify-between p-4 border rounded-xl bg-muted/30">
-                    <div className="flex items-center gap-4">
-                      <div className="h-12 w-12 rounded-full bg-amber-500/10 flex items-center justify-center text-amber-600">
-                        <GoogleIcon className="h-6 w-6" />
+                    {/* Google Ads Section */}
+                    <div className="p-4 border rounded-xl bg-muted/30 space-y-4">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-4">
+                          <div className="h-12 w-12 rounded-full bg-amber-500/10 flex items-center justify-center text-amber-600">
+                            <GoogleIcon className="h-6 w-6" />
+                          </div>
+                          <div>
+                            <p className="font-bold">Google Ads</p>
+                            <p className="text-xs text-muted-foreground">Configure seu Customer ID e Developer Token.</p>
+                          </div>
+                        </div>
+                        <Switch 
+                          checked={!!workspaceData.googleAdsEnabled} 
+                          onCheckedChange={(checked) => setWorkspaceData({ ...workspaceData, googleAdsEnabled: checked })}
+                        />
                       </div>
-                      <div>
-                        <p className="font-bold">Google Ads</p>
-                        <p className="text-xs text-muted-foreground">Importe métricas de busca e display.</p>
-                      </div>
+
+                      {workspaceData.googleAdsEnabled && (
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2 animate-in slide-in-from-top-2 duration-300">
+                          <div className="space-y-2">
+                            <Label htmlFor="google-id">Customer ID</Label>
+                            <Input 
+                              id="google-id" 
+                              placeholder="xxx-xxx-xxxx"
+                              value={workspaceData.googleAdsCustomerId || ""} 
+                              onChange={(e) => setWorkspaceData({ ...workspaceData, googleAdsCustomerId: e.target.value })}
+                            />
+                          </div>
+                          <div className="space-y-2">
+                            <Label htmlFor="google-token">Developer Token</Label>
+                            <Input 
+                              id="google-token" 
+                              type="password"
+                              placeholder="Token da API"
+                              value={workspaceData.googleAdsDeveloperToken || ""} 
+                              onChange={(e) => setWorkspaceData({ ...workspaceData, googleAdsDeveloperToken: e.target.value })}
+                            />
+                          </div>
+                        </div>
+                      )}
                     </div>
-                    <Button variant="outline" size="sm" onClick={() => toast({ title: "Em breve", description: "A integração com Google Ads estará disponível na próxima atualização." })}>
-                      Conectar
-                    </Button>
                   </div>
-                </div>
+                  
+                  <Button disabled={isLoading} className="w-full">
+                    {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                    Salvar Configurações de Ads
+                  </Button>
+                </form>
               </CardContent>
             </Card>
           </TabsContent>
         </Tabs>
     </div>
+  );
+}
+
+export default function SettingsPage() {
+  return (
+    <Suspense fallback={
+      <div className="p-8 flex justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    }>
+      <SettingsContent />
+    </Suspense>
   );
 }
