@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -12,7 +12,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Plus } from "lucide-react";
+import { Plus, RefreshCcw } from "lucide-react";
 import axios from "axios";
 import { useToast } from "@/hooks/use-toast";
 
@@ -29,14 +29,40 @@ export function InvoiceDialog({ onSuccess }: InvoiceDialogProps) {
   const [dueDate, setDueDate] = useState<string>("");
   const { toast } = useToast();
 
-  useEffect(() => {
-    if (open) {
-      axios.get("/api/clients").then((res) => setClients(res.data));
-      axios.get("/api/projects").then((res) => setProjects(res.data));
-      setSelectedClientId("");
-      setDueDate("");
+  const reloadLists = useCallback(async () => {
+    try {
+      setIsLoading(true);
+      const timestamp = Date.now();
+      const [clientsRes, projectsRes] = await Promise.all([
+        axios.get(`/api/clients?t=${timestamp}`),
+        axios.get(`/api/projects?t=${timestamp}`),
+      ]);
+
+      const nextClients = Array.isArray(clientsRes.data) ? clientsRes.data : [];
+      nextClients.sort((a, b) => String(a?.name || "").localeCompare(String(b?.name || ""), "pt-BR"));
+      setClients(nextClients);
+
+      const nextProjects = Array.isArray(projectsRes.data) ? projectsRes.data : [];
+      nextProjects.sort((a, b) => String(a?.name || "").localeCompare(String(b?.name || ""), "pt-BR"));
+      setProjects(nextProjects);
+    } catch (error) {
+      console.error("Erro ao carregar dados para fatura", error);
+      toast({
+        title: "Erro",
+        description: "Não foi possível carregar a lista de clientes e projetos.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
     }
-  }, [open]);
+  }, [toast]);
+
+  useEffect(() => {
+    if (!open) return;
+    setSelectedClientId("");
+    setDueDate("");
+    reloadLists();
+  }, [open, reloadLists]);
 
   async function onSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -108,7 +134,20 @@ export function InvoiceDialog({ onSuccess }: InvoiceDialogProps) {
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="clientId" className="text-slate-700 dark:text-slate-300">Cliente *</Label>
+            <div className="flex items-center justify-between gap-2">
+              <Label htmlFor="clientId" className="text-slate-700 dark:text-slate-300">Cliente *</Label>
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                className="h-7 px-2 gap-2 text-xs"
+                onClick={reloadLists}
+                disabled={isLoading}
+              >
+                <RefreshCcw className="h-3.5 w-3.5" />
+                Atualizar
+              </Button>
+            </div>
             <Select
               name="clientId"
               required
@@ -131,14 +170,18 @@ export function InvoiceDialog({ onSuccess }: InvoiceDialogProps) {
               }}
             >
               <SelectTrigger className="bg-transparent">
-                <SelectValue placeholder="Selecione o cliente" />
+                <SelectValue placeholder={isLoading ? "Carregando clientes..." : "Selecione o cliente"} />
               </SelectTrigger>
-              <SelectContent>
-                {clients.map((client) => (
-                  <SelectItem key={client.id} value={client.id}>
-                    {client.name}
-                  </SelectItem>
-                ))}
+              <SelectContent className="bg-white dark:bg-slate-950 border-slate-200 dark:border-slate-800">
+                {clients.length === 0 && !isLoading ? (
+                  <div className="p-2 text-center text-sm text-muted-foreground">Nenhum cliente encontrado</div>
+                ) : (
+                  clients.map((client) => (
+                    <SelectItem key={client.id} value={client.id}>
+                      {client.name}
+                    </SelectItem>
+                  ))
+                )}
               </SelectContent>
             </Select>
           </div>
@@ -147,14 +190,18 @@ export function InvoiceDialog({ onSuccess }: InvoiceDialogProps) {
             <Label htmlFor="projectId" className="text-slate-700 dark:text-slate-300">Projeto (Opcional)</Label>
             <Select name="projectId">
               <SelectTrigger className="bg-transparent">
-                <SelectValue placeholder="Selecione o projeto" />
+                <SelectValue placeholder={isLoading ? "Carregando projetos..." : "Selecione o projeto"} />
               </SelectTrigger>
-              <SelectContent>
-                {projects.map((project) => (
-                  <SelectItem key={project.id} value={project.id}>
-                    {project.name}
-                  </SelectItem>
-                ))}
+              <SelectContent className="bg-white dark:bg-slate-950 border-slate-200 dark:border-slate-800">
+                {projects.length === 0 && !isLoading ? (
+                  <div className="p-2 text-center text-sm text-muted-foreground">Nenhum projeto encontrado</div>
+                ) : (
+                  projects.map((project) => (
+                    <SelectItem key={project.id} value={project.id}>
+                      {project.name}
+                    </SelectItem>
+                  ))
+                )}
               </SelectContent>
             </Select>
           </div>

@@ -50,7 +50,12 @@ export async function GET(req: Request) {
       })),
     }));
 
-    return NextResponse.json(clients);
+    return NextResponse.json(clients, {
+      headers: {
+        "Cache-Control": "no-store, max-age=0",
+        Pragma: "no-cache",
+      },
+    });
   } catch (error: any) {
     console.error("CLIENTS_GET", error);
     return NextResponse.json(
@@ -148,7 +153,12 @@ export async function POST(req: Request) {
       },
     });
 
-    return NextResponse.json(client);
+    return NextResponse.json(client, {
+      headers: {
+        "Cache-Control": "no-store, max-age=0",
+        Pragma: "no-cache",
+      },
+    });
   } catch (error: any) {
     console.error("CLIENTS_POST", error);
 
