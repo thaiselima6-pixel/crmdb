@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import axios from "axios";
+import { WhatsAppService } from "@/lib/whatsapp";
 
 export async function POST(req: Request) {
   try {
@@ -17,26 +17,12 @@ export async function POST(req: Request) {
       return new NextResponse("Phone and message are required", { status: 400 });
     }
 
-    // Buscar workspace para obter credenciais de WhatsApp
-    const workspace = await prisma.workspace.findUnique({
-      where: { id: workspaceId }
-    });
-
-    if (!workspace) return new NextResponse("Workspace not found", { status: 404 });
-
-    // Se tiver Evolution API configurada, tenta enviar mensagem real
-    if (workspace.whatsappUrl && workspace.whatsappApiKey && workspace.whatsappInstance) {
-      try {
-        await axios.post(`${workspace.whatsappUrl}/message/sendText/${workspace.whatsappInstance}`, {
-          number: phone,
-          text: message
-        }, {
-          headers: { "apikey": workspace.whatsappApiKey }
-        });
-      } catch (waError) {
-        console.error("FAILED_TO_SEND_WHATSAPP", waError);
-        // Mesmo se falhar o envio real, vamos registrar no banco
-      }
+    // Tentar enviar mensagem via UazAPI
+    try {
+      await WhatsAppService.sendMessage(workspaceId, phone, message);
+    } catch (waError) {
+      console.error("FAILED_TO_SEND_WHATSAPP", waError);
+      // Mesmo se falhar o envio, registra no banco
     }
 
     // Registrar na conversa (mesma lógica do webhook)

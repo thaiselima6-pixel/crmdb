@@ -5,43 +5,73 @@ export class WhatsAppService {
   private static async getSettings(workspaceId: string) {
     const workspace = await prisma.workspace.findUnique({
       where: { id: workspaceId },
-      select: { 
-        whatsappUrl: true, 
-        whatsappApiKey: true, 
-        whatsappInstance: true 
+      select: {
+        whatsappUrl: true,
+        whatsappApiKey: true,
       }
     });
     return workspace;
   }
 
+  /**
+   * Envia mensagem de texto via UazAPI
+   * POST {whatsappUrl}/send/text
+   * Header: Token: {whatsappApiKey}
+   * Body: { number, text }
+   */
   static async sendMessage(workspaceId: string, phone: string, message: string) {
     const settings = await this.getSettings(workspaceId);
-    
-    if (!settings?.whatsappUrl || !settings?.whatsappApiKey || !settings?.whatsappInstance) {
+
+    if (!settings?.whatsappUrl || !settings?.whatsappApiKey) {
       throw new Error('Configurações do WhatsApp não encontradas para este workspace.');
     }
 
-    const url = `${settings.whatsappUrl}/message/sendText/${settings.whatsappInstance}`;
-    
+    const url = `${settings.whatsappUrl.replace(/\/$/, '')}/send/text`;
+    const number = phone.replace(/\D/g, '');
+
     try {
-      const response = await axios.post(url, {
-        number: phone.replace(/\D/g, ''), // Remove non-digits
-        text: message
-      }, {
+      const response = await axios.post(url, { number, text: message }, {
         headers: {
-          'apikey': settings.whatsappApiKey,
-          'Content-Type': 'application/json'
+          'Token': settings.whatsappApiKey,
+          'Content-Type': 'application/json',
         }
       });
-      
       return response.data;
     } catch (error: any) {
-      console.error('WhatsApp Service Error:', error.response?.data || error.message);
+      console.error('WhatsApp (UazAPI) Error:', error.response?.data || error.message);
       throw new Error(`Erro ao enviar mensagem WhatsApp: ${error.message}`);
     }
   }
 
-  // Função para enviar via N8N (Webhook)
+  /**
+   * Configura o webhook no UazAPI apontando para o CRM
+   * POST {whatsappUrl}/webhook
+   */
+  static async configureWebhook(workspaceId: string, webhookUrl: string) {
+    const settings = await this.getSettings(workspaceId);
+
+    if (!settings?.whatsappUrl || !settings?.whatsappApiKey) {
+      throw new Error('Configurações do WhatsApp não encontradas.');
+    }
+
+    const url = `${settings.whatsappUrl.replace(/\/$/, '')}/webhook`;
+
+    const response = await axios.post(url, {
+      url: webhookUrl,
+      events: ['messages'],
+      excludeMessages: ['wasNotSentByApi', 'isGroupYes'],
+      enabled: true,
+    }, {
+      headers: {
+        'Token': settings.whatsappApiKey,
+        'Content-Type': 'application/json',
+      }
+    });
+
+    return response.data;
+  }
+
+  // Função para enviar via N8N (Webhook) — mantida para compatibilidade
   static async triggerN8N(webhookUrl: string, data: any) {
     try {
       const response = await axios.post(webhookUrl, data);

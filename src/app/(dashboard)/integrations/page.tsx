@@ -228,50 +228,76 @@ function IntegrationsContent() {
           </CardContent>
         </Card>
 
-        {/* WhatsApp & N8N Section */}
+        {/* WhatsApp (UazAPI) Section */}
         <Card className="border-none shadow-md">
           <CardHeader>
-            <CardTitle>WhatsApp & N8N</CardTitle>
-            <CardDescription>Conecte sua Evolution API e Webhooks.</CardDescription>
+            <CardTitle>WhatsApp (UazAPI)</CardTitle>
+            <CardDescription>Conecte seu número via UazAPI para enviar e receber mensagens.</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="wa-url">URL Evolution API</Label>
-              <Input 
-                id="wa-url" 
-                placeholder="https://api.sua-instancia.com"
-                value={workspaceData.whatsappUrl || ""} 
+              <Label htmlFor="wa-url">URL do Servidor UazAPI</Label>
+              <Input
+                id="wa-url"
+                placeholder="https://httpseasyn8n.uazapi.com"
+                value={workspaceData.whatsappUrl || ""}
                 onChange={(e) => setWorkspaceData({ ...workspaceData, whatsappUrl: e.target.value })}
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="wa-key">API Key</Label>
-              <Input 
-                id="wa-key" 
+              <Label htmlFor="wa-key">Token da Instância</Label>
+              <Input
+                id="wa-key"
                 type="password"
-                value={workspaceData.whatsappApiKey || ""} 
+                placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
+                value={workspaceData.whatsappApiKey || ""}
                 onChange={(e) => setWorkspaceData({ ...workspaceData, whatsappApiKey: e.target.value })}
               />
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="wa-instance">Instância</Label>
-              <Input 
-                id="wa-instance" 
-                placeholder="ex: agencial_whatsapp"
-                value={workspaceData.whatsappInstance || ""} 
-                onChange={(e) => setWorkspaceData({ ...workspaceData, whatsappInstance: e.target.value })}
-              />
+
+            {/* Botão para configurar webhook automaticamente */}
+            <div className="pt-2 border-t space-y-2">
+              <p className="text-xs text-muted-foreground">
+                Clique no botão abaixo para apontar automaticamente o webhook do UazAPI para o CRM (necessário para a Maya responder mensagens).
+              </p>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                className="w-full gap-2 text-xs"
+                disabled={isLoading || !workspaceData.whatsappUrl || !workspaceData.whatsappApiKey}
+                onClick={async () => {
+                  try {
+                    setIsLoading(true);
+                    // Salvar credenciais primeiro
+                    await axios.patch("/api/settings/workspace", {
+                      whatsappUrl: workspaceData.whatsappUrl,
+                      whatsappApiKey: workspaceData.whatsappApiKey,
+                    });
+                    const webhookUrl = `${window.location.origin}/api/webhooks/whatsapp`;
+                    await axios.post("/api/settings/configure-webhook", { webhookUrl });
+                    toast({ title: "Webhook configurado!", description: "UazAPI agora aponta para o CRM." });
+                  } catch (err: any) {
+                    toast({ title: "Erro", description: err?.response?.data?.message || "Não foi possível configurar o webhook.", variant: "destructive" });
+                  } finally {
+                    setIsLoading(false);
+                  }
+                }}
+              >
+                {isLoading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Zap className="h-3.5 w-3.5" />}
+                Configurar Webhook Automaticamente
+              </Button>
             </div>
-            <div className="pt-2 border-t">
-              <div className="space-y-2">
-                <Label htmlFor="n8n-url">Webhook N8N</Label>
-                <Input 
-                  id="n8n-url" 
-                  placeholder="https://n8n.seu-servidor.com/webhook/..."
-                  value={workspaceData.n8nWebhookUrl || ""} 
-                  onChange={(e) => setWorkspaceData({ ...workspaceData, n8nWebhookUrl: e.target.value })}
-                />
-              </div>
+
+            <div className="pt-2 border-t space-y-2">
+              <Label htmlFor="n8n-url">Webhook N8N (opcional)</Label>
+              <Input
+                id="n8n-url"
+                placeholder="https://n8n.seu-servidor.com/webhook/..."
+                value={workspaceData.n8nWebhookUrl || ""}
+                onChange={(e) => setWorkspaceData({ ...workspaceData, n8nWebhookUrl: e.target.value })}
+              />
+              <p className="text-[10px] text-muted-foreground">Se preenchido, o CRM também encaminha eventos para o N8N.</p>
             </div>
           </CardContent>
         </Card>
@@ -342,7 +368,7 @@ function IntegrationsContent() {
                 <Info className="h-4 w-4 shrink-0 mt-0.5" />
                 <div>
                   <p className="font-semibold">Como conectar o WhatsApp à Maya</p>
-                  <p className="text-xs mt-1 opacity-90">No painel do Evolution API, vá em <strong>Webhooks</strong> e configure a URL abaixo como destino das mensagens recebidas. Habilite o evento <code className="bg-blue-100 dark:bg-blue-900 px-1 rounded">messages.upsert</code>.</p>
+                  <p className="text-xs mt-1 opacity-90">Use o botão <strong>"Configurar Webhook Automaticamente"</strong> acima (seção WhatsApp). Ou copie a URL abaixo e configure manualmente no painel UazAPI em <strong>Webhooks</strong>, habilitando o evento <code className="bg-blue-100 dark:bg-blue-900 px-1 rounded">messages</code>.</p>
                 </div>
               </div>
               <div className="flex items-center gap-2">

@@ -36,7 +36,6 @@ export async function sendInvoiceReminders(workspaceId: string): Promise<Reminde
       reminderTemplateOverdue: true,
       whatsappUrl: true,
       whatsappApiKey: true,
-      whatsappInstance: true,
     },
   });
 
@@ -103,7 +102,7 @@ export async function sendInvoiceReminders(workspaceId: string): Promise<Reminde
     };
   }
 
-  if (!workspace?.whatsappUrl || !workspace?.whatsappApiKey || !workspace?.whatsappInstance) {
+  if (!workspace?.whatsappUrl || !workspace?.whatsappApiKey) {
     return {
       processed: 0,
       attempted,
