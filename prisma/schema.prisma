@@ -61,7 +61,13 @@ model Workspace {
   whatsappUrl              String?
   reminderTemplateOverdue  String?            @default("Olá {{client_name}}! Identificamos que sua fatura no valor de R$ {{valor}} com vencimento em {{due_date}} ainda não foi quitada. Por favor, regularize sua situação.")
   reminderTemplateUpcoming String?            @default("Olá {{client_name}}! Lembramos que sua fatura no valor de R$ {{valor}} vence em {{due_date}}. Evite multas efetuando o pagamento em dia.")
-  
+  reminderTemplateDueToday String?            @default("Olá {{client_name}}! Sua fatura no valor de R$ {{valor}} vence hoje ({{due_date}}). Efetue o pagamento para evitar multas e juros.")
+  autoRemindersEnabled     Boolean?           @default(false)
+
+  // Maya IA - Assistente Virtual WhatsApp
+  mayaEnabled              Boolean?           @default(false)
+  mayaSystemPrompt         String?
+
   // Integrações de Ads
   metaAdsEnabled           Boolean?           @default(false)
   metaAdsPixelId           String?

@@ -24,7 +24,9 @@ export async function GET(req: Request) {
       where: { id: workspaceId },
       select: {
         reminderTemplateUpcoming: true,
+        reminderTemplateDueToday: true,
         reminderTemplateOverdue: true,
+        autoRemindersEnabled: true,
       }
     });
 
@@ -186,13 +188,15 @@ export async function PATCH(req: Request) {
 
     const workspaceId = (session.user as any).workspaceId;
     const body = await req.json();
-    const { reminderTemplateUpcoming, reminderTemplateOverdue } = body;
+    const { reminderTemplateUpcoming, reminderTemplateDueToday, reminderTemplateOverdue, autoRemindersEnabled } = body;
 
     const workspace = await prisma.workspace.update({
       where: { id: workspaceId },
       data: {
         reminderTemplateUpcoming,
+        reminderTemplateDueToday,
         reminderTemplateOverdue,
+        ...(typeof autoRemindersEnabled === 'boolean' && { autoRemindersEnabled }),
       },
     });
 

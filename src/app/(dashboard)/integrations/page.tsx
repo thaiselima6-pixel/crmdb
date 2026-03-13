@@ -7,7 +7,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, Facebook, Search as GoogleIcon, Zap, MessageSquare, Link2, Unlink } from "lucide-react";
+import { Loader2, Facebook, Search as GoogleIcon, Zap, MessageSquare, Link2, Unlink, Bot, Copy, CheckCheck, Info } from "lucide-react";
+import { Textarea } from "@/components/ui/textarea";
 import axios from "axios";
 import { useSearchParams } from "next/navigation";
 import { Suspense } from "react";
@@ -17,6 +18,7 @@ function IntegrationsContent() {
   const searchParams = useSearchParams();
   const [isLoading, setIsLoading] = useState(false);
   const [workspaceData, setWorkspaceData] = useState<any>(null);
+  const [copied, setCopied] = useState(false);
 
   useEffect(() => {
     const success = searchParams.get("success");
@@ -310,6 +312,87 @@ function IntegrationsContent() {
                 checked={!!workspaceData.meetingRemindersEnabled} 
                 onCheckedChange={(checked) => setWorkspaceData({ ...workspaceData, meetingRemindersEnabled: checked })}
               />
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Maya IA Section */}
+        <Card className="border-none shadow-md md:col-span-2">
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center text-primary">
+                  <Bot className="h-5 w-5" />
+                </div>
+                <div>
+                  <CardTitle>Maya — Assistente Virtual WhatsApp</CardTitle>
+                  <CardDescription>Responde automaticamente a leads e clientes usando IA.</CardDescription>
+                </div>
+              </div>
+              <Switch
+                checked={!!workspaceData.mayaEnabled}
+                onCheckedChange={(checked) => setWorkspaceData({ ...workspaceData, mayaEnabled: checked })}
+              />
+            </div>
+          </CardHeader>
+          <CardContent className="space-y-5">
+            {/* URL do webhook para configurar no Evolution API */}
+            <div className="bg-blue-50 dark:bg-blue-950/30 border border-blue-100 dark:border-blue-900/50 rounded-lg p-4 space-y-3">
+              <div className="flex items-start gap-2 text-sm text-blue-700 dark:text-blue-300">
+                <Info className="h-4 w-4 shrink-0 mt-0.5" />
+                <div>
+                  <p className="font-semibold">Como conectar o WhatsApp à Maya</p>
+                  <p className="text-xs mt-1 opacity-90">No painel do Evolution API, vá em <strong>Webhooks</strong> e configure a URL abaixo como destino das mensagens recebidas. Habilite o evento <code className="bg-blue-100 dark:bg-blue-900 px-1 rounded">messages.upsert</code>.</p>
+                </div>
+              </div>
+              <div className="flex items-center gap-2">
+                <code className="flex-1 text-xs bg-white dark:bg-black/40 border border-blue-200 dark:border-blue-800 rounded px-3 py-2 font-mono truncate">
+                  {typeof window !== "undefined" ? window.location.origin : "https://seu-dominio.com"}/api/webhooks/whatsapp
+                </code>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="shrink-0 gap-1.5 border-blue-200 text-blue-700 hover:bg-blue-50 dark:border-blue-800 dark:text-blue-300"
+                  onClick={() => {
+                    const url = `${window.location.origin}/api/webhooks/whatsapp`;
+                    navigator.clipboard.writeText(url);
+                    setCopied(true);
+                    setTimeout(() => setCopied(false), 2000);
+                  }}
+                >
+                  {copied ? <CheckCheck className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />}
+                  {copied ? "Copiado!" : "Copiar"}
+                </Button>
+              </div>
+            </div>
+
+            {/* System prompt / personalidade */}
+            <div className="space-y-2">
+              <Label htmlFor="maya-prompt" className="font-semibold">
+                Personalidade e Instruções da Maya
+              </Label>
+              <p className="text-xs text-muted-foreground">
+                Descreva como a Maya deve se comportar, o que oferecer e como abordar os contatos. Deixe em branco para usar a personalidade padrão.
+              </p>
+              <Textarea
+                id="maya-prompt"
+                placeholder={`Exemplo:\nVocê é Maya, assistente virtual da ${workspaceData?.name || "minha agência"}.\nSeja simpática e objetiva. Quando alguém quiser saber sobre nossos serviços, apresente nossas soluções de tráfego pago e gestão de redes sociais.\nSempre finalize coletando o WhatsApp do interessado para um especialista retornar.`}
+                className="min-h-[130px] resize-none font-mono text-xs"
+                value={workspaceData.mayaSystemPrompt || ""}
+                onChange={(e) => setWorkspaceData({ ...workspaceData, mayaSystemPrompt: e.target.value })}
+              />
+            </div>
+
+            {/* Status visual */}
+            <div className={`flex items-center gap-2 text-xs px-3 py-2 rounded-lg border ${
+              workspaceData.mayaEnabled
+                ? "bg-emerald-50 border-emerald-200 text-emerald-700 dark:bg-emerald-950/40 dark:border-emerald-800 dark:text-emerald-400"
+                : "bg-muted/30 border-border text-muted-foreground"
+            }`}>
+              <div className={`h-2 w-2 rounded-full ${workspaceData.mayaEnabled ? "bg-emerald-500 animate-pulse" : "bg-muted-foreground/40"}`} />
+              {workspaceData.mayaEnabled
+                ? "Maya ativa — respondendo mensagens recebidas via WhatsApp automaticamente."
+                : "Maya desativada — mensagens são registradas mas não respondidas automaticamente."}
             </div>
           </CardContent>
         </Card>

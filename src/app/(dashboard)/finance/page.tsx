@@ -22,7 +22,7 @@ import { ReminderTemplateDialog } from "@/components/finance/reminder-template-d
 import { Skeleton } from "@/components/ui/skeleton";
 import { motion } from "framer-motion";
 import { useToast } from "@/hooks/use-toast";
-import { BellRing, Loader2, CheckCircle2, Trash2, Clock } from "lucide-react";
+import { BellRing, Loader2, CheckCircle2, Trash2, Clock, Zap } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -44,7 +44,24 @@ export default function FinancePage() {
   const [data, setData] = useState<any>({ invoices: [], mrr: 0 });
   const [isLoading, setIsLoading] = useState(true);
   const [isSendingReminders, setIsSendingReminders] = useState(false);
+  const [transactionsView, setTransactionsView] = useState<"current_and_pending" | "all">("current_and_pending");
   const { toast } = useToast();
+
+  const now = new Date();
+  const startOfCurrentMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+  const startOfNextMonth = new Date(now.getFullYear(), now.getMonth() + 1, 1);
+
+  const isPendingInvoice = (invoice: any) => invoice?.status === "PENDING" || invoice?.status === "OVERDUE";
+  const isInCurrentMonth = (dateValue: unknown) => {
+    const d = dateValue instanceof Date ? dateValue : new Date(String(dateValue));
+    if (Number.isNaN(d.getTime())) return false;
+    return d >= startOfCurrentMonth && d < startOfNextMonth;
+  };
+
+  const displayedInvoices =
+    transactionsView === "all"
+      ? data.invoices
+      : data.invoices.filter((invoice: any) => isInCurrentMonth(invoice.dueDate) || isPendingInvoice(invoice));
 
   const fetchFinanceData = async () => {
     try {
@@ -127,23 +144,36 @@ export default function FinancePage() {
           <p className="text-muted-foreground">Acompanhe a saúde financeira da sua agência.</p>
         </div>
         <div className="flex gap-2">
-          <ReminderTemplateDialog 
-            templates={data.templates || { reminderTemplateUpcoming: "", reminderTemplateOverdue: "" }} 
-            onSuccess={fetchFinanceData} 
+          <ReminderTemplateDialog
+            templates={data.templates || {
+              reminderTemplateUpcoming: "",
+              reminderTemplateDueToday: "",
+              reminderTemplateOverdue: "",
+              autoRemindersEnabled: false,
+            }}
+            onSuccess={fetchFinanceData}
           />
-          <Button 
-            variant="outline" 
-            className="gap-2 border-primary text-primary hover:bg-primary hover:text-white transition-all"
-            onClick={sendAutomatedReminders}
-            disabled={isSendingReminders}
-          >
-            {isSendingReminders ? (
-              <Loader2 className="h-4 w-4 animate-spin" />
-            ) : (
-              <BellRing className="h-4 w-4" />
+          <div className="flex items-center gap-1">
+            {data.templates?.autoRemindersEnabled && (
+              <span className="flex items-center gap-1 text-xs text-emerald-600 bg-emerald-50 dark:bg-emerald-950/40 dark:text-emerald-400 px-2 py-1 rounded-full border border-emerald-200 dark:border-emerald-800">
+                <Zap className="h-3 w-3" />
+                Auto ativo
+              </span>
             )}
-            Lembretes WhatsApp
-          </Button>
+            <Button
+              variant="outline"
+              className="gap-2 border-primary text-primary hover:bg-primary hover:text-white transition-all"
+              onClick={sendAutomatedReminders}
+              disabled={isSendingReminders}
+            >
+              {isSendingReminders ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <BellRing className="h-4 w-4" />
+              )}
+              Lembretes WhatsApp
+            </Button>
+          </div>
           <InvoiceDialog onSuccess={fetchFinanceData} />
         </div>
       </div>
@@ -223,8 +253,28 @@ export default function FinancePage() {
           {/* Transactions Table */}
           <div className="space-y-4">
             <div className="flex items-center justify-between">
-              <h2 className="text-lg font-bold">Últimas Transações</h2>
-              <Button variant="outline" size="sm">Ver Relatório Completo</Button>
+              <div className="flex flex-col">
+                <h2 className="text-lg font-bold">Últimas Transações</h2>
+                <span className="text-xs text-muted-foreground">
+                  {transactionsView === "all" ? "Exibindo: todas" : "Exibindo: mês atual + pendentes"}
+                </span>
+              </div>
+              <div className="flex gap-2">
+                <Button
+                  variant={transactionsView === "current_and_pending" ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => setTransactionsView("current_and_pending")}
+                >
+                  Mês atual + pendentes
+                </Button>
+                <Button
+                  variant={transactionsView === "all" ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => setTransactionsView("all")}
+                >
+                  Todas
+                </Button>
+              </div>
             </div>
             <div className="rounded-md border bg-card overflow-hidden">
               <Table>
@@ -250,12 +300,14 @@ export default function FinancePage() {
                         <TableCell className="text-right"><Skeleton className="h-8 w-8 ml-auto" /></TableCell>
                       </TableRow>
                     ))
-                  ) : data.invoices.length === 0 ? (
+                  ) : displayedInvoices.length === 0 ? (
                     <TableRow>
-                      <TableCell colSpan={6} className="text-center h-24 text-muted-foreground">Nenhuma transação encontrada.</TableCell>
+                      <TableCell colSpan={6} className="text-center h-24 text-muted-foreground">
+                        Nenhuma transação encontrada para este filtro.
+                      </TableCell>
                     </TableRow>
                   ) : (
-                    data.invoices.map((invoice: any, index: number) => (
+                    displayedInvoices.map((invoice: any, index: number) => (
                       <motion.tr
                        key={invoice.id}
                        initial={{ opacity: 0, x: -20 }}

@@ -31,7 +31,9 @@ export async function GET(req: Request) {
         googleAdsAccountName: true,
         autoFollowUpEnabled: true,
         autoWelcomeEnabled: true,
-        meetingRemindersEnabled: true
+        meetingRemindersEnabled: true,
+        mayaEnabled: true,
+        mayaSystemPrompt: true,
       }
     });
 
@@ -67,6 +69,8 @@ export async function PATCH(req: Request) {
         autoFollowUpEnabled: body.autoFollowUpEnabled,
         autoWelcomeEnabled: body.autoWelcomeEnabled,
         meetingRemindersEnabled: body.meetingRemindersEnabled,
+        mayaEnabled: body.mayaEnabled,
+        mayaSystemPrompt: body.mayaSystemPrompt,
       }
     });
 
