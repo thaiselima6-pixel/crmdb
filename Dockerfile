@@ -14,7 +14,7 @@ ENV DATABASE_URL=$DATABASE_URL
 COPY package*.json ./
 
 # Instala exatamente as versões do package-lock (evita Prisma/Next quebrando em updates)
-RUN npm ci
+RUN npm ci --include=optional
 
 # Copia o código e gera Prisma + build
 COPY . .
