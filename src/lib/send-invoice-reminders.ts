@@ -23,7 +23,6 @@ const DEFAULT_OVERDUE = "Olá {{client_name}}! Identificamos que sua fatura no v
 
 export async function sendInvoiceReminders(workspaceId: string): Promise<RemindersResponse> {
   const today = startOfDay(new Date());
-  const yesterday = addDays(today, -1);
   const tomorrow = addDays(today, 1);
   const twoDaysFromNow = addDays(today, 2);
   const threeDaysFromNow = addDays(today, 3);
@@ -82,8 +81,8 @@ export async function sendInvoiceReminders(workspaceId: string): Promise<Reminde
     prisma.invoice.findMany({
       where: {
         workspaceId,
-        status: { in: ['PENDING', 'OVERDUE'] },
-        dueDate: { gte: yesterday, lt: today },
+        status: 'OVERDUE',
+        dueDate: { lt: today },
         ...notRemindedToday,
       },
       include: { client: true },
@@ -109,7 +108,7 @@ export async function sendInvoiceReminders(workspaceId: string): Promise<Reminde
       skippedNoPhone: 0,
       details: [],
       error: 'missing_credentials',
-      message: 'Configurações do WhatsApp não encontradas. Configure em Configurações → Agência.',
+      message: 'Configurações do WhatsApp não encontradas. Configure em Integrações → WhatsApp (UazAPI).',
     };
   }
 

@@ -27,7 +27,10 @@ export class WhatsAppService {
     }
 
     const url = `${settings.whatsappUrl.replace(/\/$/, '')}/send/text`;
-    const number = phone.replace(/\D/g, '');
+    let number = phone.replace(/\D/g, '');
+    if (!number.startsWith('55') && (number.length === 10 || number.length === 11)) {
+      number = `55${number}`;
+    }
 
     try {
       const response = await axios.post(url, { number, text: message }, {

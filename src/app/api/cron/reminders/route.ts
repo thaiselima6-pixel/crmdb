@@ -5,8 +5,10 @@ import { sendInvoiceReminders } from "@/lib/send-invoice-reminders";
 // Endpoint chamado automaticamente pelo Vercel Cron (ou qualquer scheduler externo).
 // Protegido via CRON_SECRET definido nas variáveis de ambiente.
 export async function GET(req: Request) {
+  const isVercelCron = req.headers.get("x-vercel-cron") === "1";
   const authHeader = req.headers.get("authorization");
-  if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
+  const cronSecret = process.env.CRON_SECRET;
+  if (!isVercelCron && (!cronSecret || authHeader !== `Bearer ${cronSecret}`)) {
     return new NextResponse("Unauthorized", { status: 401 });
   }
 

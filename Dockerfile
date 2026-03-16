@@ -10,8 +10,8 @@ ENV TAILWIND_DISABLE_OXIDE=1
 # Copia package.json e package-lock.json
 COPY package*.json ./
 
-# Ignora o package-lock antigo e instala deps do zero (como o erro recomenda)
-RUN rm -f package-lock.json && npm install
+# Instala exatamente as versões do package-lock (evita Prisma/Next quebrando em updates)
+RUN npm ci
 
 # Copia o código e gera Prisma + build
 COPY . .
