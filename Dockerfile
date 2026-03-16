@@ -15,7 +15,7 @@ COPY package*.json ./
 
 # Instala exatamente as versões do package-lock (evita Prisma/Next quebrando em updates)
 RUN npm ci --include=dev --include=optional
-RUN node -e "require('lightningcss'); console.log('lightningcss ok')" || (LC_VER=$(node -p \"require('./package-lock.json').packages['node_modules/lightningcss'].version\"); npm i --no-save \"lightningcss-linux-x64-gnu@$LC_VER\"; node -e \"require('lightningcss'); console.log('lightningcss ok after fix')\")
+RUN LC_VER=$(node -p "require('./package-lock.json').packages['node_modules/lightningcss'].version") && npm i --no-save "lightningcss-linux-x64-gnu@$LC_VER" && node -e "require('lightningcss'); console.log('lightningcss ok')"
 
 # Copia o código e gera Prisma + build
 COPY . .
