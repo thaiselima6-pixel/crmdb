@@ -9,13 +9,13 @@ ENV TAILWIND_DISABLE_OXIDE=1
 
 ARG DATABASE_URL
 ENV DATABASE_URL=$DATABASE_URL
-ENV NODE_ENV=development
 
 # Copia package.json e package-lock.json
 COPY package*.json ./
 
 # Instala exatamente as versões do package-lock (evita Prisma/Next quebrando em updates)
 RUN npm ci --include=dev --include=optional
+RUN node -e "require('lightningcss'); console.log('lightningcss ok')" || (LC_VER=$(node -p \"require('./package-lock.json').packages['node_modules/lightningcss'].version\"); npm i --no-save \"lightningcss-linux-x64-gnu@$LC_VER\"; node -e \"require('lightningcss'); console.log('lightningcss ok after fix')\")
 
 # Copia o código e gera Prisma + build
 COPY . .
