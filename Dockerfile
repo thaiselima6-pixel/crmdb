@@ -9,12 +9,13 @@ ENV TAILWIND_DISABLE_OXIDE=1
 
 ARG DATABASE_URL
 ENV DATABASE_URL=$DATABASE_URL
+ENV NODE_ENV=development
 
 # Copia package.json e package-lock.json
 COPY package*.json ./
 
 # Instala exatamente as versões do package-lock (evita Prisma/Next quebrando em updates)
-RUN npm ci --include=optional
+RUN npm ci --include=dev --include=optional
 
 # Copia o código e gera Prisma + build
 COPY . .
