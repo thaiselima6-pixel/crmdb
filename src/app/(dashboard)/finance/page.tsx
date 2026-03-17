@@ -22,7 +22,7 @@ import { ReminderTemplateDialog } from "@/components/finance/reminder-template-d
 import { Skeleton } from "@/components/ui/skeleton";
 import { motion } from "framer-motion";
 import { useToast } from "@/hooks/use-toast";
-import { BellRing, Loader2, CheckCircle2, Trash2, Clock, Zap } from "lucide-react";
+import { BellRing, Loader2, CheckCircle2, Trash2, Clock, Zap, Pencil } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -45,6 +45,8 @@ export default function FinancePage() {
   const [isLoading, setIsLoading] = useState(true);
   const [isSendingReminders, setIsSendingReminders] = useState(false);
   const [transactionsView, setTransactionsView] = useState<"current_and_pending" | "all">("current_and_pending");
+  const [isEditInvoiceOpen, setIsEditInvoiceOpen] = useState(false);
+  const [editingInvoice, setEditingInvoice] = useState<any>(null);
   const { toast } = useToast();
 
   const now = new Date();
@@ -175,6 +177,20 @@ export default function FinancePage() {
             </Button>
           </div>
           <InvoiceDialog onSuccess={fetchFinanceData} />
+          <InvoiceDialog
+            invoice={editingInvoice}
+            open={isEditInvoiceOpen}
+            onOpenChange={(nextOpen) => {
+              setIsEditInvoiceOpen(nextOpen);
+              if (!nextOpen) setEditingInvoice(null);
+            }}
+            onSuccess={() => {
+              setIsEditInvoiceOpen(false);
+              setEditingInvoice(null);
+              fetchFinanceData();
+            }}
+            trigger={null}
+          />
         </div>
       </div>
 
@@ -364,6 +380,16 @@ export default function FinancePage() {
                                   Marcar como Pendente
                                 </DropdownMenuItem>
                               )}
+                              <DropdownMenuItem
+                                className="gap-2"
+                                onClick={() => {
+                                  setEditingInvoice(invoice);
+                                  setIsEditInvoiceOpen(true);
+                                }}
+                              >
+                                <Pencil className="h-4 w-4" />
+                                Editar
+                              </DropdownMenuItem>
                               <DropdownMenuSeparator />
                               <DropdownMenuItem 
                                 className="gap-2 text-destructive focus:text-destructive focus:bg-destructive/10"

@@ -18,15 +18,26 @@ import { useToast } from "@/hooks/use-toast";
 
 interface InvoiceDialogProps {
   onSuccess?: () => void;
+  invoice?: any;
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
+  trigger?: React.ReactNode | null;
 }
 
-export function InvoiceDialog({ onSuccess }: InvoiceDialogProps) {
-  const [open, setOpen] = useState(false);
+export function InvoiceDialog({ onSuccess, invoice, open: openProp, onOpenChange, trigger }: InvoiceDialogProps) {
+  const [uncontrolledOpen, setUncontrolledOpen] = useState(false);
+  const isControlled = typeof openProp === "boolean" && typeof onOpenChange === "function";
+  const open = isControlled ? openProp : uncontrolledOpen;
+  const setOpen = isControlled ? onOpenChange : setUncontrolledOpen;
   const [isLoading, setIsLoading] = useState(false);
   const [clients, setClients] = useState<any[]>([]);
   const [projects, setProjects] = useState<any[]>([]);
   const [selectedClientId, setSelectedClientId] = useState<string>("");
+  const [selectedProjectId, setSelectedProjectId] = useState<string>("");
   const [dueDate, setDueDate] = useState<string>("");
+  const [description, setDescription] = useState<string>("");
+  const [amount, setAmount] = useState<string>("");
+  const [status, setStatus] = useState<string>("PENDING");
   const { toast } = useToast();
 
   const reloadLists = useCallback(async () => {
@@ -59,37 +70,48 @@ export function InvoiceDialog({ onSuccess }: InvoiceDialogProps) {
 
   useEffect(() => {
     if (!open) return;
-    setSelectedClientId("");
-    setDueDate("");
+    const nextClientId = invoice?.clientId ? String(invoice.clientId) : "";
+    const nextProjectId = invoice?.projectId ? String(invoice.projectId) : "";
+    const nextDueDate = invoice?.dueDate ? new Date(invoice.dueDate).toISOString().slice(0, 10) : "";
+
+    setSelectedClientId(nextClientId);
+    setSelectedProjectId(nextProjectId);
+    setDueDate(nextDueDate);
+    setDescription(invoice?.description ? String(invoice.description) : "");
+    setAmount(invoice?.amount !== undefined && invoice?.amount !== null ? String(invoice.amount) : "");
+    setStatus(invoice?.status ? String(invoice.status) : "PENDING");
     reloadLists();
-  }, [open, reloadLists]);
+  }, [open, reloadLists, invoice]);
 
   async function onSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setIsLoading(true);
 
-    const formData = new FormData(event.currentTarget);
     const data = {
-      description: formData.get("description"),
-      amount: formData.get("amount"),
-      status: formData.get("status"),
-      dueDate: formData.get("dueDate") || dueDate,
-      clientId: formData.get("clientId"),
-      projectId: formData.get("projectId"),
+      description,
+      amount,
+      status,
+      dueDate,
+      clientId: selectedClientId,
+      projectId: selectedProjectId === "__none__" ? null : selectedProjectId || null,
     };
 
     try {
-      await axios.post("/api/finance", data);
+      if (invoice?.id) {
+        await axios.put(`/api/finance/${invoice.id}`, data);
+      } else {
+        await axios.post("/api/finance", data);
+      }
       toast({
         title: "Sucesso!",
-        description: "Fatura criada com sucesso.",
+        description: invoice?.id ? "Fatura atualizada com sucesso." : "Fatura criada com sucesso.",
       });
       setOpen(false);
       onSuccess?.();
     } catch (error) {
       toast({
         title: "Erro",
-        description: "Ocorreu um erro ao criar a fatura.",
+        description: invoice?.id ? "Ocorreu um erro ao editar a fatura." : "Ocorreu um erro ao criar a fatura.",
         variant: "destructive",
       });
     } finally {
@@ -99,25 +121,49 @@ export function InvoiceDialog({ onSuccess }: InvoiceDialogProps) {
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        <Button className="gap-2">
-          <Plus className="h-4 w-4" /> Nova Fatura
-        </Button>
-      </DialogTrigger>
+      {trigger === null ? null : (
+        <DialogTrigger asChild>
+          {trigger || (
+            <Button className="gap-2">
+              <Plus className="h-4 w-4" /> Nova Fatura
+            </Button>
+          )}
+        </DialogTrigger>
+      )}
       <DialogContent className="sm:max-w-[500px] bg-white dark:bg-slate-950 border-slate-200 dark:border-slate-800">
         <DialogHeader>
-          <DialogTitle className="text-slate-900 dark:text-slate-50">Gerar Nova Fatura</DialogTitle>
+          <DialogTitle className="text-slate-900 dark:text-slate-50">
+            {invoice?.id ? "Editar Fatura" : "Gerar Nova Fatura"}
+          </DialogTitle>
         </DialogHeader>
         <form onSubmit={onSubmit} className="space-y-4 pt-4">
           <div className="space-y-2">
             <Label htmlFor="description" className="text-slate-700 dark:text-slate-300">Descrição da Fatura *</Label>
-            <Input id="description" name="description" placeholder="Ex: Manutenção Mensal - Fevereiro" required className="bg-transparent" />
+            <Input
+              id="description"
+              name="description"
+              placeholder="Ex: Manutenção Mensal - Fevereiro"
+              required
+              className="bg-transparent"
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+            />
           </div>
 
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="amount" className="text-slate-700 dark:text-slate-300">Valor (R$) *</Label>
-              <Input id="amount" name="amount" type="number" step="0.01" placeholder="0,00" required className="bg-transparent" />
+              <Input
+                id="amount"
+                name="amount"
+                type="number"
+                step="0.01"
+                placeholder="0,00"
+                required
+                className="bg-transparent"
+                value={amount}
+                onChange={(e) => setAmount(e.target.value)}
+              />
             </div>
             <div className="space-y-2">
               <Label htmlFor="dueDate" className="text-slate-700 dark:text-slate-300">Vencimento *</Label>
@@ -188,11 +234,16 @@ export function InvoiceDialog({ onSuccess }: InvoiceDialogProps) {
 
           <div className="space-y-2">
             <Label htmlFor="projectId" className="text-slate-700 dark:text-slate-300">Projeto (Opcional)</Label>
-            <Select name="projectId">
+            <Select
+              name="projectId"
+              value={selectedProjectId}
+              onValueChange={(value) => setSelectedProjectId(value)}
+            >
               <SelectTrigger className="bg-transparent">
                 <SelectValue placeholder={isLoading ? "Carregando projetos..." : "Selecione o projeto"} />
               </SelectTrigger>
               <SelectContent className="bg-white dark:bg-slate-950 border-slate-200 dark:border-slate-800">
+                <SelectItem value="__none__">Sem projeto</SelectItem>
                 {projects.length === 0 && !isLoading ? (
                   <div className="p-2 text-center text-sm text-muted-foreground">Nenhum projeto encontrado</div>
                 ) : (
@@ -208,7 +259,7 @@ export function InvoiceDialog({ onSuccess }: InvoiceDialogProps) {
 
           <div className="space-y-2">
             <Label htmlFor="status" className="text-slate-700 dark:text-slate-300">Status Inicial</Label>
-            <Select name="status" defaultValue="PENDING">
+            <Select name="status" value={status} onValueChange={(value) => setStatus(value)}>
               <SelectTrigger className="bg-transparent">
                 <SelectValue placeholder="Selecione o status" />
               </SelectTrigger>
@@ -225,7 +276,7 @@ export function InvoiceDialog({ onSuccess }: InvoiceDialogProps) {
               Cancelar
             </Button>
             <Button type="submit" disabled={isLoading} className="bg-primary text-primary-foreground hover:bg-primary/90">
-              {isLoading ? "Gerando..." : "Gerar Fatura"}
+              {isLoading ? (invoice?.id ? "Salvando..." : "Gerando...") : invoice?.id ? "Salvar Alterações" : "Gerar Fatura"}
             </Button>
           </div>
         </form>
