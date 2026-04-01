@@ -10,8 +10,21 @@ const RATE_LIMITS: Record<string, number> = {
 
 const STORE: {
   hits: Map<string, { count: number; ts: number }>;
-} = (globalThis as any).__rate_store__ ?? { hits: new Map() };
+  lastCleanup: number;
+} = (globalThis as any).__rate_store__ ?? { hits: new Map(), lastCleanup: Date.now() };
 (globalThis as any).__rate_store__ = STORE;
+
+function cleanup() {
+  const now = Date.now();
+  if (now - STORE.lastCleanup > RATE_LIMIT_WINDOW_MS) {
+    for (const [k, v] of STORE.hits.entries()) {
+      if (now - v.ts > RATE_LIMIT_WINDOW_MS) {
+        STORE.hits.delete(k);
+      }
+    }
+    STORE.lastCleanup = now;
+  }
+}
 
 function key(req: NextRequest) {
   const ip =
@@ -27,6 +40,7 @@ function limitFor(pathname: string) {
 }
 
 function checkRate(req: NextRequest) {
+  cleanup();
   const pathname = new URL(req.url).pathname;
   const max = limitFor(pathname);
   const k = key(req);
@@ -63,10 +77,10 @@ export function middleware(req: NextRequest) {
   res.headers.set("X-Frame-Options", "DENY");
   res.headers.set("Referrer-Policy", "strict-origin-when-cross-origin");
   res.headers.set("X-XSS-Protection", "0");
-  res.headers.set(
-    "Content-Security-Policy",
-    "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; connect-src 'self' https:; frame-ancestors 'none'; base-uri 'self'; form-action 'self'"
-  );
+  const isDev = process.env.NODE_ENV !== "production";
+  const csp = `default-src 'self'; script-src 'self' 'unsafe-inline' ${isDev ? "'unsafe-eval'" : ""}; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https:; font-src 'self' data: https:; connect-src 'self' https: wss:; frame-ancestors 'none'; base-uri 'self'; form-action 'self'`;
+  
+  res.headers.set("Content-Security-Policy", csp);
   if (process.env.NODE_ENV === "production") {
     res.headers.set("Strict-Transport-Security", "max-age=15552000; includeSubDomains");
   }

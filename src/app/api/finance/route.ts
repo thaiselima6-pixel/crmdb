@@ -141,6 +141,28 @@ export async function POST(req: Request) {
       parsedDueDate = d;
     }
 
+    const clientExists = await prisma.client.findFirst({
+      where: { id: clientId, workspaceId },
+    });
+    if (!clientExists) {
+      return NextResponse.json(
+        { message: "Cliente inválido ou não autorizado." },
+        { status: 400 }
+      );
+    }
+
+    if (projectId) {
+      const projectExists = await prisma.project.findFirst({
+        where: { id: projectId, workspaceId },
+      });
+      if (!projectExists) {
+        return NextResponse.json(
+          { message: "Projeto inválido ou não autorizado." },
+          { status: 400 }
+        );
+      }
+    }
+
     const invoice = await prisma.invoice.create({
       data: {
         amount: normalizedAmount,

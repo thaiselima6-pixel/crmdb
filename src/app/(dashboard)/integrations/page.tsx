@@ -7,7 +7,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, Facebook, Search as GoogleIcon, Zap, MessageSquare, Link2, Unlink, Bot, Copy, CheckCheck, Info } from "lucide-react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import { Loader2, Facebook, Search as GoogleIcon, Zap, MessageSquare, Link2, Unlink, Bot, Copy, CheckCheck, Info, QrCode } from "lucide-react";
 import { Textarea } from "@/components/ui/textarea";
 import axios from "axios";
 import { useSearchParams } from "next/navigation";
@@ -19,6 +20,9 @@ function IntegrationsContent() {
   const [isLoading, setIsLoading] = useState(false);
   const [workspaceData, setWorkspaceData] = useState<any>(null);
   const [copied, setCopied] = useState(false);
+  const [qrDialogOpen, setQrDialogOpen] = useState(false);
+  const [qrCodeData, setQrCodeData] = useState<string | null>(null);
+  const [isGeneratingQr, setIsGeneratingQr] = useState(false);
 
   useEffect(() => {
     const success = searchParams.get("success");
@@ -83,6 +87,32 @@ function IntegrationsContent() {
       });
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const handleGenerateQR = async () => {
+    if (!workspaceData.whatsappUrl || !workspaceData.whatsappApiKey) {
+      toast({ title: "Credenciais ausentes", description: "Preencha a URL e Token primeiro.", variant: "destructive" });
+      return;
+    }
+    setQrDialogOpen(true);
+    setIsGeneratingQr(true);
+    setQrCodeData(null);
+    try {
+      await axios.patch("/api/settings/workspace", {
+        whatsappUrl: workspaceData.whatsappUrl,
+        whatsappApiKey: workspaceData.whatsappApiKey,
+      });
+      const res = await axios.post("/api/settings/whatsapp-qr", {
+        url: workspaceData.whatsappUrl,
+        token: workspaceData.whatsappApiKey
+      });
+      setQrCodeData(res.data.qrCodeBase64);
+    } catch (err: any) {
+      toast({ title: "Erro na API Externa", description: "Não foi possível resgatar o QR Code. A API parece estar offline.", variant: "destructive" });
+      setQrDialogOpen(false);
+    } finally {
+      setIsGeneratingQr(false);
     }
   };
 
@@ -255,38 +285,50 @@ function IntegrationsContent() {
               />
             </div>
 
-            {/* Botão para configurar webhook automaticamente */}
+            {/* Ações Avançadas WA */}
             <div className="pt-2 border-t space-y-2">
-              <p className="text-xs text-muted-foreground">
-                Clique no botão abaixo para apontar automaticamente o webhook do UazAPI para o CRM (necessário para a Maya responder mensagens).
+              <p className="text-xs text-muted-foreground mb-3">
+                Habilite o CRM a ler e responder suas mensagens apontando o Webhook, e emparelhe a conexão ativando o QR Code Nativo abaixo.
               </p>
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                className="w-full gap-2 text-xs"
-                disabled={isLoading || !workspaceData.whatsappUrl || !workspaceData.whatsappApiKey}
-                onClick={async () => {
-                  try {
-                    setIsLoading(true);
-                    // Salvar credenciais primeiro
-                    await axios.patch("/api/settings/workspace", {
-                      whatsappUrl: workspaceData.whatsappUrl,
-                      whatsappApiKey: workspaceData.whatsappApiKey,
-                    });
-                    const webhookUrl = `${window.location.origin}/api/webhooks/whatsapp`;
-                    await axios.post("/api/settings/configure-webhook", { webhookUrl });
-                    toast({ title: "Webhook configurado!", description: "UazAPI agora aponta para o CRM." });
-                  } catch (err: any) {
-                    toast({ title: "Erro", description: err?.response?.data?.message || "Não foi possível configurar o webhook.", variant: "destructive" });
-                  } finally {
-                    setIsLoading(false);
-                  }
-                }}
-              >
-                {isLoading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Zap className="h-3.5 w-3.5" />}
-                Configurar Webhook Automaticamente
-              </Button>
+              <div className="grid grid-cols-2 gap-3">
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  className="w-full gap-2 text-xs"
+                  disabled={isLoading || !workspaceData.whatsappUrl || !workspaceData.whatsappApiKey}
+                  onClick={async () => {
+                    try {
+                      setIsLoading(true);
+                      await axios.patch("/api/settings/workspace", {
+                        whatsappUrl: workspaceData.whatsappUrl,
+                        whatsappApiKey: workspaceData.whatsappApiKey,
+                      });
+                      const webhookUrl = `${window.location.origin}/api/webhooks/whatsapp`;
+                      await axios.post("/api/settings/configure-webhook", { webhookUrl });
+                      toast({ title: "Webhook configurado!", description: "UazAPI agora aponta para o CRM." });
+                    } catch (err: any) {
+                      toast({ title: "Erro", description: err?.response?.data?.message || "Não foi possível configurar o webhook.", variant: "destructive" });
+                    } finally {
+                      setIsLoading(false);
+                    }
+                  }}
+                >
+                  {isLoading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Zap className="h-3.5 w-3.5" />}
+                  Ligar Webhook
+                </Button>
+
+                <Button
+                  type="button"
+                  variant="default"
+                  size="sm"
+                  className="w-full gap-2 text-xs bg-emerald-600 hover:bg-emerald-700 text-white"
+                  disabled={isLoading || !workspaceData.whatsappUrl || !workspaceData.whatsappApiKey}
+                  onClick={handleGenerateQR}
+                >
+                  <QrCode className="h-4 w-4" /> Conectar via QR Code
+                </Button>
+              </div>
             </div>
 
             <div className="pt-2 border-t space-y-2">
@@ -430,6 +472,29 @@ function IntegrationsContent() {
           </Button>
         </div>
       </div>
+
+      <Dialog open={qrDialogOpen} onOpenChange={setQrDialogOpen}>
+        <DialogContent className="sm:max-w-md flex flex-col items-center text-center">
+          <DialogHeader>
+            <DialogTitle>Conexão Nativa WhatsApp</DialogTitle>
+            <DialogDescription>Abra o WhatsApp no seu celular, vá em "Aparelhos Conectados" e aponte a câmera para o código abaixo.</DialogDescription>
+          </DialogHeader>
+          
+          <div className="flex items-center justify-center p-6 bg-white rounded-xl min-h-[250px] w-[250px] border shadow-sm mt-4">
+            {isGeneratingQr ? (
+              <div className="flex flex-col items-center gap-4 text-muted-foreground">
+                <Loader2 className="h-8 w-8 animate-spin text-emerald-600" />
+                <p className="text-sm font-medium animate-pulse">Buscando QR Code...</p>
+              </div>
+            ) : qrCodeData ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={qrCodeData} alt="WhatsApp QR Code Base64" className="w-[200px] h-[200px] object-contain" />
+            ) : (
+              <p className="text-sm text-destructive font-medium">Falha na API: Verifique sua URL e Token.</p>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

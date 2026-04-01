@@ -17,6 +17,14 @@ export async function POST(
     const body = await req.json();
     const { name, url, size, type } = body;
 
+    const project = await prisma.project.findFirst({
+      where: { id: projectId, workspaceId },
+    });
+
+    if (!project) {
+      return new NextResponse("Project not found", { status: 404 });
+    }
+
     const file = await prisma.projectFile.create({
       data: {
         name,
@@ -43,8 +51,17 @@ export async function DELETE(
     const session = await getServerSession(authOptions);
     if (!session || !session.user) return new NextResponse("Unauthorized", { status: 401 });
 
+    const workspaceId = (session.user as any).workspaceId;
     const body = await req.json();
     const { id } = body;
+
+    const existingFile = await prisma.projectFile.findFirst({
+      where: { id, workspaceId },
+    });
+
+    if (!existingFile) {
+      return new NextResponse("File not found", { status: 404 });
+    }
 
     await prisma.projectFile.delete({
       where: { id },

@@ -37,14 +37,42 @@ export async function GET(req: Request) {
     const accountName = userRes.data.name || userRes.data.email;
     const workspaceId = (session.user as any).workspaceId;
 
-    // 3. Save to workspace (using access_token or refresh_token if offline access was requested)
-    await prisma.workspace.update({
-      where: { id: workspaceId },
-      data: {
-        googleAdsDeveloperToken: access_token, // Ideally we'd store the refresh token and handle renewal
-        googleAdsAccountName: accountName,
-        googleAdsEnabled: true,
-      },
+    // 3. Save to workspace and create SocialAccount
+    await prisma.$transaction(async (tx) => {
+      await tx.workspace.update({
+        where: { id: workspaceId },
+        data: {
+          googleAdsAccountName: accountName,
+          googleAdsEnabled: true,
+        },
+      });
+
+      const existingAccount = await tx.socialAccount.findFirst({
+        where: { workspaceId, provider: "GOOGLE" }
+      });
+
+      const expiresAt = new Date(Date.now() + 3600 * 1000); // Google tokens generally expire in 1h
+
+      if (existingAccount) {
+        await tx.socialAccount.update({
+          where: { id: existingAccount.id },
+          data: {
+            accessToken: access_token,
+            refreshToken: refresh_token || existingAccount.refreshToken, // keep old if not returned
+            expiresAt,
+          }
+        });
+      } else {
+        await tx.socialAccount.create({
+          data: {
+            workspaceId,
+            provider: "GOOGLE",
+            accessToken: access_token,
+            refreshToken: refresh_token || "",
+            expiresAt,
+          }
+        });
+      }
     });
 
     return NextResponse.redirect(`${process.env.NEXTAUTH_URL}/integrations?success=google`);

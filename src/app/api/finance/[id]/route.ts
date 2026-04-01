@@ -111,11 +111,23 @@ export async function PUT(
       if (!clientId) {
         return NextResponse.json({ message: "Cliente é obrigatório para editar uma fatura." }, { status: 400 });
       }
+
+      const clientExists = await prisma.client.findFirst({
+        where: { id: clientId, workspaceId }
+      });
+      if (!clientExists) return NextResponse.json({ message: "Cliente inválido ou não autorizado." }, { status: 400 });
+
       updateData.clientId = clientId;
     }
 
     if (body?.projectId !== undefined) {
       const projectId = body.projectId ? String(body.projectId) : null;
+      if (projectId) {
+        const projectExists = await prisma.project.findFirst({
+          where: { id: projectId, workspaceId }
+        });
+        if (!projectExists) return NextResponse.json({ message: "Projeto inválido ou não autorizado." }, { status: 400 });
+      }
       updateData.projectId = projectId || null;
     }
 

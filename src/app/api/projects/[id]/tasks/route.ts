@@ -11,8 +11,17 @@ export async function GET(
     const session = await getServerSession(authOptions);
     if (!session || !session.user) return new NextResponse("Unauthorized", { status: 401 });
 
+    const workspaceId = (session.user as any).workspaceId;
     const resolvedParams = await params;
     const { id } = resolvedParams;
+
+    const project = await prisma.project.findFirst({
+      where: { id, workspaceId },
+    });
+
+    if (!project) {
+      return new NextResponse("Project not found", { status: 404 });
+    }
 
     const tasks = await prisma.task.findMany({
       where: { projectId: id },
@@ -34,10 +43,19 @@ export async function POST(
     const session = await getServerSession(authOptions);
     if (!session || !session.user) return new NextResponse("Unauthorized", { status: 401 });
 
+    const workspaceId = (session.user as any).workspaceId;
     const resolvedParams = await params;
     const { id } = resolvedParams;
     const body = await req.json();
     const { title, description, dueDate, status, priority } = body;
+
+    const project = await prisma.project.findFirst({
+      where: { id, workspaceId },
+    });
+
+    if (!project) {
+      return new NextResponse("Project not found", { status: 404 });
+    }
 
     const task = await prisma.task.create({
       data: {
@@ -65,8 +83,17 @@ export async function PATCH(
     const session = await getServerSession(authOptions);
     if (!session || !session.user) return new NextResponse("Unauthorized", { status: 401 });
 
+    const workspaceId = (session.user as any).workspaceId;
     const body = await req.json();
     const { id: taskId, status } = body;
+
+    const existingTask = await prisma.task.findFirst({
+      where: { id: taskId, project: { workspaceId } },
+    });
+
+    if (!existingTask) {
+      return new NextResponse("Task not found", { status: 404 });
+    }
 
     const task = await prisma.task.update({
       where: { id: taskId },
@@ -88,8 +115,17 @@ export async function DELETE(
     const session = await getServerSession(authOptions);
     if (!session || !session.user) return new NextResponse("Unauthorized", { status: 401 });
 
+    const workspaceId = (session.user as any).workspaceId;
     const body = await req.json();
     const { id: taskId } = body;
+
+    const existingTask = await prisma.task.findFirst({
+      where: { id: taskId, project: { workspaceId } },
+    });
+
+    if (!existingTask) {
+      return new NextResponse("Task not found", { status: 404 });
+    }
 
     await prisma.task.delete({
       where: { id: taskId },

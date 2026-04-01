@@ -10,6 +10,10 @@ export async function POST(req: Request) {
       return new NextResponse("Campos obrigatórios ausentes", { status: 400 });
     }
 
+    if (password.length < 8) {
+      return new NextResponse("Senhas devem ter no mínimo 8 caracteres", { status: 400 });
+    }
+
     const existingUser = await prisma.user.findUnique({
       where: { email },
     });

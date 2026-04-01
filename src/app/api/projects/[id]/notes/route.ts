@@ -17,6 +17,14 @@ export async function POST(
     const body = await req.json();
     const { content } = body;
 
+    const project = await prisma.project.findFirst({
+      where: { id: projectId, workspaceId },
+    });
+
+    if (!project) {
+      return new NextResponse("Project not found", { status: 404 });
+    }
+
     const note = await prisma.projectNote.create({
       data: {
         content,
@@ -40,8 +48,17 @@ export async function PATCH(
     const session = await getServerSession(authOptions);
     if (!session || !session.user) return new NextResponse("Unauthorized", { status: 401 });
 
+    const workspaceId = (session.user as any).workspaceId;
     const body = await req.json();
     const { id, content } = body;
+
+    const existingNote = await prisma.projectNote.findFirst({
+      where: { id, workspaceId },
+    });
+
+    if (!existingNote) {
+      return new NextResponse("Note not found", { status: 404 });
+    }
 
     const note = await prisma.projectNote.update({
       where: { id },
@@ -63,8 +80,17 @@ export async function DELETE(
     const session = await getServerSession(authOptions);
     if (!session || !session.user) return new NextResponse("Unauthorized", { status: 401 });
 
+    const workspaceId = (session.user as any).workspaceId;
     const body = await req.json();
     const { id } = body;
+
+    const existingNote = await prisma.projectNote.findFirst({
+      where: { id, workspaceId },
+    });
+
+    if (!existingNote) {
+      return new NextResponse("Note not found", { status: 404 });
+    }
 
     await prisma.projectNote.delete({
       where: { id },

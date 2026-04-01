@@ -18,7 +18,7 @@ export const ourFileRouter = {
     return { uploadedBy: metadata.userId };
   }),
 
-projectAttachment: f(["image", "pdf", "text", "blob"])
+projectAttachment: f({ image: { maxFileSize: "16MB" }, pdf: { maxFileSize: "16MB" }, text: { maxFileSize: "16MB" }, blob: { maxFileSize: "16MB" } })
   .middleware(async () => {
     const session = await getServerSession(authOptions);
     if (!session || !session.user) throw new Error("Unauthorized");
