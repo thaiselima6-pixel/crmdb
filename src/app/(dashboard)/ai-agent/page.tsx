@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import axios from "axios";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { 
   MessageSquare, 
@@ -37,32 +38,26 @@ export default function AIAgentPage() {
   const fetchConversations = async () => {
     try {
       setIsLoading(true);
-      setConversations([
-        {
-          id: "1",
-          phone: "5511999999999",
-          name: "João Silva",
-          lastMessage: "Quanto custa o plano de social media?",
-          time: new Date(),
-          status: "ASSISTING",
-          messages: [
-            { role: "user", content: "Olá, gostaria de saber mais sobre os serviços.", time: new Date(Date.now() - 3600000) },
-            { role: "assistant", content: "Olá João! Sou a Maya, assistente virtual da agência. Temos Social Media, Tráfego Pago e SEO. Qual te interessa mais?", time: new Date(Date.now() - 3500000) },
-            { role: "user", content: "Quanto custa o plano de social media?", time: new Date() }
-          ]
-        },
-        {
-          id: "2",
-          phone: "5511888888888",
-          name: "Maria Souza",
-          lastMessage: "Obrigada, vou pensar.",
-          time: new Date(Date.now() - 86400000),
-          status: "FINISHED",
-          messages: []
-        }
-      ]);
+      const res = await axios.get("/api/ai/conversations");
+      
+      const formattedConversations = res.data.map((conv: any) => ({
+        id: conv.id,
+        phone: conv.phone,
+        name: conv.title || conv.phone,
+        lastMessage: conv.messages[conv.messages.length - 1]?.content || "Iniciou um bate-papo",
+        time: new Date(conv.updatedAt),
+        status: "ASSISTING",
+        messages: conv.messages.map((msg: any) => ({
+          role: msg.role === 'assistant' ? 'assistant' : 'user',
+          content: msg.content,
+          time: new Date(msg.createdAt)
+        }))
+      }));
+
+      setConversations(formattedConversations);
     } catch (error) {
       console.error("Failed to fetch conversations", error);
+      toast({ title: "Erro", description: "Não foi possível carregar o histórico do WhatsApp.", variant: "destructive" });
     } finally {
       setIsLoading(false);
     }
@@ -167,7 +162,7 @@ export default function AIAgentPage() {
                     Abrir no WhatsApp
                   </Button>
                   <Button variant="destructive" size="sm">
-                    Pausar ANA
+                    Pausar Maya
                   </Button>
                 </div>
               </CardHeader>
@@ -196,7 +191,7 @@ export default function AIAgentPage() {
                 </div>
                 <p className="text-[10px] text-slate-400 mt-2 text-center flex items-center justify-center gap-1">
                   <ShieldCheck className="h-3 w-3" /> 
-                  ANA está ativa neste chat. Se você enviar uma mensagem, ela será pausada automaticamente.
+                  Maya está ativa neste chat. Se você enviar uma mensagem, ela será pausada automaticamente.
                 </p>
               </div>
             </>
@@ -205,7 +200,7 @@ export default function AIAgentPage() {
               <div className="h-20 w-20 rounded-full bg-slate-100 dark:bg-slate-900 flex items-center justify-center">
                 <MessageSquare className="h-10 w-10 text-slate-300" />
               </div>
-              <p>Selecione uma conversa para visualizar os logs da ANA.</p>
+              <p>Selecione uma conversa para visualizar os logs da Maya.</p>
             </div>
           )}
         </Card>
