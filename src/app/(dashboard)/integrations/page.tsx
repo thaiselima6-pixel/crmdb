@@ -23,6 +23,7 @@ function IntegrationsContent() {
   const [qrDialogOpen, setQrDialogOpen] = useState(false);
   const [qrCodeData, setQrCodeData] = useState<string | null>(null);
   const [isGeneratingQr, setIsGeneratingQr] = useState(false);
+  const [qrError, setQrError] = useState<string | null>(null);
 
   useEffect(() => {
     const success = searchParams.get("success");
@@ -98,6 +99,7 @@ function IntegrationsContent() {
     setQrDialogOpen(true);
     setIsGeneratingQr(true);
     setQrCodeData(null);
+    setQrError(null);
     try {
       await axios.patch("/api/settings/workspace", {
         whatsappUrl: workspaceData.whatsappUrl,
@@ -109,8 +111,7 @@ function IntegrationsContent() {
       });
       setQrCodeData(res.data.qrCodeBase64);
     } catch (err: any) {
-      toast({ title: "Erro na API Externa", description: "Não foi possível resgatar o QR Code. A API parece estar offline.", variant: "destructive" });
-      setQrDialogOpen(false);
+      setQrError(err.response?.data?.error || "Servidor offline ou recusou a conexão.");
     } finally {
       setIsGeneratingQr(false);
     }
@@ -489,6 +490,12 @@ function IntegrationsContent() {
             ) : qrCodeData ? (
               // eslint-disable-next-line @next/next/no-img-element
               <img src={qrCodeData} alt="WhatsApp QR Code Base64" className="w-[200px] h-[200px] object-contain" />
+            ) : qrError ? (
+              <div className="flex flex-col items-center gap-2 text-center text-destructive p-2">
+                 <p className="text-xs font-bold uppercase">Erro de Conexão</p>
+                 <p className="text-xs font-medium">{qrError}</p>
+                 <p className="text-[10px] text-muted-foreground mt-2">Valide se a URL está certa e evite colocar a porta se não for necessário.</p>
+              </div>
             ) : (
               <p className="text-sm text-destructive font-medium">Falha na API: Verifique sua URL e Token.</p>
             )}
