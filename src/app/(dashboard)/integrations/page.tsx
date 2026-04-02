@@ -492,9 +492,10 @@ function IntegrationsContent() {
               <img src={qrCodeData} alt="WhatsApp QR Code Base64" className="w-[200px] h-[200px] object-contain" />
             ) : qrError ? (
               <div className="flex flex-col items-center gap-2 text-center text-destructive p-2">
-                 <p className="text-xs font-bold uppercase">Erro de Conexão</p>
-                 <p className="text-xs font-medium">{qrError}</p>
-                 <p className="text-[10px] text-muted-foreground mt-2">Valide se a URL está certa e evite colocar a porta se não for necessário.</p>
+                 <p className="text-xs font-bold uppercase">QR Secundário Indisponível</p>
+                 <p className="text-xs font-medium text-slate-700">{qrError}</p>
+                 <a href={workspaceData?.whatsappUrl} target="_blank" className="mt-3 text-xs text-white bg-blue-600 hover:bg-blue-700 w-full py-2 rounded-md font-medium">Abrir Painel do UazAPI</a>
+                 <p className="text-[10px] text-muted-foreground mt-2">Dica: Se você usa UazAPI / Serviços Fechados, a plataforma deles bloqueia a exportação do QR para CRMs. Vá diretamente no site oficial deles, conecte o seu celular e o CRM funcionará automaticamente!</p>
               </div>
             ) : (
               <p className="text-sm text-destructive font-medium">Falha na API: Verifique sua URL e Token.</p>
