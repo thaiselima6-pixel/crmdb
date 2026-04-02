@@ -109,7 +109,11 @@ function IntegrationsContent() {
         url: workspaceData.whatsappUrl,
         token: workspaceData.whatsappApiKey
       });
-      setQrCodeData(res.data.qrCodeBase64);
+      if (res.data.isConnected) {
+        setQrCodeData("connected");
+      } else {
+        setQrCodeData(res.data.qrCodeBase64);
+      }
     } catch (err: any) {
       setQrError(err.response?.data?.error || "Servidor offline ou recusou a conexão.");
     } finally {
@@ -486,6 +490,12 @@ function IntegrationsContent() {
               <div className="flex flex-col items-center gap-4 text-muted-foreground">
                 <Loader2 className="h-8 w-8 animate-spin text-emerald-600" />
                 <p className="text-sm font-medium animate-pulse">Buscando QR Code...</p>
+              </div>
+            ) : qrCodeData === "connected" ? (
+              <div className="flex flex-col items-center gap-4 text-emerald-600 p-4 text-center">
+                <CheckCheck className="h-16 w-16" />
+                <p className="text-lg font-bold min-w-max">WhatsApp Conectado!</p>
+                <p className="text-[11px] text-muted-foreground text-slate-600">Sua instância na API já está ativa. O seu CRM e os disparos já estão funcionando.</p>
               </div>
             ) : qrCodeData ? (
               // eslint-disable-next-line @next/next/no-img-element

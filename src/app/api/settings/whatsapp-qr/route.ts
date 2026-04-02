@@ -15,9 +15,11 @@ export async function POST(req: Request) {
     
     let qrBase64 = null;
     let qrRawString = null;
+    let isConnected = false;
 
     // Tentativas heurísticas de buscar o QR Code nos padrões de APIs que usam /send/text
     const endpointsToTry = [
+      '/instance/connectionState',
       '/instance/qr',
       '/qr',
       '/qrcode',
@@ -27,11 +29,17 @@ export async function POST(req: Request) {
     ];
 
     for (const endpoint of endpointsToTry) {
-      if (qrBase64) break;
+      if (qrBase64 || isConnected) break;
       try {
         const res = await axios.get(`${baseUrl}${endpoint}`, {
           headers: { 'Token': token, 'Authorization': `Bearer ${token}` }
         });
+
+        const state = res.data?.state || res.data?.instance?.state || res.data?.status || res.data?.instance?.status;
+        if (state === "open" || state === "connected" || state === "CONNECTED" || state === "SUCCESS" || res.data?.connected === true) {
+          isConnected = true;
+          break;
+        }
 
         if (res.data?.base64) qrBase64 = res.data.base64;
         else if (res.data?.qrcode && res.data.qrcode.startsWith("data:image")) qrBase64 = res.data.qrcode;
@@ -41,6 +49,10 @@ export async function POST(req: Request) {
       } catch (err) {
         // Ignora erro e tenta o próximo
       }
+    }
+
+    if (isConnected) {
+      return NextResponse.json({ isConnected: true });
     }
 
     // Se a API não retornou a tela do QR Code Base64...
