@@ -13,7 +13,6 @@ import {
   Settings, 
   LogOut,
   Bot,
-  MessageSquare,
   BarChart3,
   LayoutGrid,
   Zap
@@ -33,7 +32,6 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
     { label: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
     { label: "Leads", href: "/leads", icon: Users },
     { label: "Pipeline", href: "/pipeline-settings", icon: LayoutGrid },
-    { label: "Contatos & Chat", href: "/contacts", icon: MessageSquare },
     { label: "Funil de Vendas", href: "/funnel", icon: Layers },
     { label: "Clientes", href: "/clients", icon: Users },
     { label: "Propostas", href: "/proposals", icon: FileText },
