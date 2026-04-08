@@ -58,18 +58,17 @@ export async function POST(req: Request) {
           status: "CONTACTED",
           tags,
           workspaceId,
-          ...(personalizedMessage
-            ? {
-                notes: {
-                  create: {
-                    content: `📨 Mensagem enviada pelo Victor Vendas:\n\n${personalizedMessage}`,
-                    workspaceId,
-                  },
-                },
-              }
-            : {}),
         },
       });
+
+      if (personalizedMessage) {
+        await prisma.note.create({
+          data: {
+            content: `📨 Mensagem enviada pelo Victor Vendas:\n\n${personalizedMessage}`,
+            leadId: lead.id,
+          },
+        });
+      }
 
       return NextResponse.json({ success: true, leadId: lead.id });
     }
