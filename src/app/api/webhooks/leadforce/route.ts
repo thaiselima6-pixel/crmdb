@@ -13,7 +13,25 @@ export async function POST(req: Request) {
     }
 
     const body = await req.json();
-    const { action, workspaceId } = body;
+
+    // Support both formats:
+    // - Our format:    { action: "create_lead", workspaceId, ... }
+    // - Lovable format: { event: "lead.created", data: { workspaceId, ... } }
+    let action = body.action;
+    let payload = body;
+
+    if (!action && body.event) {
+      const eventMap: Record<string, string> = {
+        "lead.created":  "create_lead",
+        "lead.updated":  "update_status",
+        "message.sent":  "log_conversation",
+        "message.received": "log_conversation",
+      };
+      action = eventMap[body.event] || body.event;
+      payload = { ...body, ...(body.data || {}), action };
+    }
+
+    const workspaceId = payload.workspaceId;
 
     if (!workspaceId) {
       return new NextResponse("workspaceId is required", { status: 400 });
@@ -22,7 +40,7 @@ export async function POST(req: Request) {
     // ── ACTION: create_lead ──────────────────────────────────────────────────
     // Called by send-whatsapp after Victor Vendas sends the first message
     if (action === "create_lead") {
-      const { name, company, phone, email, niche, city, website, rating, personalizedMessage } = body;
+      const { name, company, phone, email, niche, city, website, rating, personalizedMessage } = payload;
 
       // Avoid duplicates — check by phone
       const existing = await prisma.lead.findFirst({
@@ -76,7 +94,7 @@ export async function POST(req: Request) {
     // ── ACTION: update_status ────────────────────────────────────────────────
     // Called by webhook-whatsapp when Maya detects intent
     if (action === "update_status") {
-      const { phone, intent } = body;
+      const { phone, intent } = payload;
 
       if (!phone) return new NextResponse("phone is required", { status: 400 });
 
@@ -116,7 +134,7 @@ export async function POST(req: Request) {
     // ── ACTION: log_conversation ─────────────────────────────────────────────
     // Called by webhook-whatsapp to log Maya conversations in CRM
     if (action === "log_conversation") {
-      const { phone, content, role } = body;
+      const { phone, content, role } = payload;
 
       if (!phone || !content || !role) {
         return new NextResponse("phone, content and role are required", { status: 400 });
