@@ -30,9 +30,8 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
 
   const menuItems = [
     { label: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
-    { label: "Leads", href: "/leads", icon: Users },
+    { label: "Leads", href: "/funnel", icon: Layers },
     { label: "Pipeline", href: "/pipeline-settings", icon: LayoutGrid },
-    { label: "Funil de Vendas", href: "/funnel", icon: Layers },
     { label: "Clientes", href: "/clients", icon: Users },
     { label: "Propostas", href: "/proposals", icon: FileText },
     { label: "Projetos", href: "/projects", icon: Briefcase },
