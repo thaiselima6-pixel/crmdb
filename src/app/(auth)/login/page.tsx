@@ -77,6 +77,57 @@ export default function LoginPage() {
               <p className="text-lg font-semibold">CRM de Agência</p>
             </div>
           </div>
+          {/* Dashboard preview */}
+          <div className="flex-1 flex items-center justify-center py-8">
+            <div className="w-full max-w-xs space-y-3">
+              {/* Metric cards row */}
+              <div className="grid grid-cols-2 gap-2">
+                <div className="rounded-xl border border-orange-500/20 bg-black/40 p-3">
+                  <p className="text-[10px] text-slate-400 uppercase tracking-widest">Leads</p>
+                  <p className="text-2xl font-bold text-white mt-0.5">248</p>
+                  <p className="text-[10px] text-orange-400">↑ 12 esta semana</p>
+                </div>
+                <div className="rounded-xl border border-orange-500/20 bg-black/40 p-3">
+                  <p className="text-[10px] text-slate-400 uppercase tracking-widest">MRR</p>
+                  <p className="text-2xl font-bold text-white mt-0.5">R$18k</p>
+                  <p className="text-[10px] text-orange-400">↑ 8% vs mês ant.</p>
+                </div>
+              </div>
+              {/* Pipeline mini */}
+              <div className="rounded-xl border border-orange-500/20 bg-black/40 p-3 space-y-2">
+                <p className="text-[10px] text-slate-400 uppercase tracking-widest">Pipeline</p>
+                {[
+                  { label: "Qualificados", value: 65, color: "bg-orange-500" },
+                  { label: "Proposta",     value: 40, color: "bg-orange-400" },
+                  { label: "Negociação",   value: 20, color: "bg-orange-300" },
+                ].map((s) => (
+                  <div key={s.label} className="flex items-center gap-2">
+                    <span className="text-[10px] text-slate-300 w-20 shrink-0">{s.label}</span>
+                    <div className="flex-1 h-1.5 rounded-full bg-slate-800">
+                      <div className={`h-full rounded-full ${s.color}`} style={{ width: `${s.value}%` }} />
+                    </div>
+                    <span className="text-[10px] text-slate-400 w-6 text-right">{s.value}%</span>
+                  </div>
+                ))}
+              </div>
+              {/* Recent activity */}
+              <div className="rounded-xl border border-orange-500/20 bg-black/40 p-3 space-y-2">
+                <p className="text-[10px] text-slate-400 uppercase tracking-widest">Atividade recente</p>
+                {[
+                  { icon: "🤖", text: "Maya qualificou novo lead", time: "2m" },
+                  { icon: "📋", text: "Proposta enviada — Agência X", time: "1h" },
+                  { icon: "✅", text: "Projeto fechado — R$3.500", time: "3h" },
+                ].map((a, i) => (
+                  <div key={i} className="flex items-center gap-2">
+                    <span className="text-sm">{a.icon}</span>
+                    <span className="text-[10px] text-slate-300 flex-1 truncate">{a.text}</span>
+                    <span className="text-[10px] text-slate-500 shrink-0">{a.time}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+
           <div className="space-y-4 mt-auto">
             <h2 className="text-3xl font-bold leading-tight">
               Organize leads, projetos e financeiro em um só lugar.
