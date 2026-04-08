@@ -1,104 +1,202 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import axios from "axios";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { 
-  MessageSquare, 
-  Bot, 
-  User, 
-  Phone, 
-  Calendar, 
-  Clock,
-  ExternalLink,
-  ChevronRight,
-  ShieldCheck,
-  RefreshCcw,
-  Search
+import {
+  MessageSquare, Bot, User, Phone, RefreshCcw, Search, Send, Loader2, AlertCircle, Settings
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { format } from "date-fns";
-import { ptBR } from "date-fns/locale";
 import { useToast } from "@/hooks/use-toast";
+import Link from "next/link";
+
+interface Chat {
+  id: string;
+  remoteJid: string;
+  name: string;
+  lastMessage: string;
+  lastMessageTime: Date | null;
+  unread: number;
+}
+
+interface Message {
+  id: string;
+  key: { remoteJid: string; fromMe: boolean; id: string };
+  message: { conversation?: string; extendedTextMessage?: { text: string }; imageMessage?: { caption?: string } };
+  messageTimestamp: number;
+  pushName?: string;
+}
+
+function getMessageText(msg: Message): string {
+  return (
+    msg.message?.conversation ||
+    msg.message?.extendedTextMessage?.text ||
+    msg.message?.imageMessage?.caption ||
+    "📎 Mídia"
+  );
+}
+
+function formatPhone(remoteJid: string): string {
+  return remoteJid.replace("@s.whatsapp.net", "").replace("@g.us", "");
+}
+
+function formatTime(ts: number | null | undefined): string {
+  if (!ts) return "";
+  const d = new Date(ts * 1000);
+  const now = new Date();
+  const isToday = d.toDateString() === now.toDateString();
+  if (isToday) return d.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" });
+  return d.toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit" });
+}
 
 export default function AIAgentPage() {
-  const [conversations, setConversations] = useState<any[]>([]);
-  const [selectedChat, setSelectedChat] = useState<any>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const [chats, setChats] = useState<Chat[]>([]);
+  const [selectedChat, setSelectedChat] = useState<Chat | null>(null);
+  const [messages, setMessages] = useState<Message[]>([]);
+  const [isLoadingChats, setIsLoadingChats] = useState(true);
+  const [isLoadingMsgs, setIsLoadingMsgs] = useState(false);
+  const [isSending, setIsSending] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
+  const [replyText, setReplyText] = useState("");
+  const [configError, setConfigError] = useState(false);
+  const messagesEndRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
 
-  useEffect(() => {
-    fetchConversations();
-  }, []);
-
-  const fetchConversations = async () => {
+  const fetchChats = useCallback(async () => {
     try {
-      setIsLoading(true);
-      const res = await axios.get("/api/ai/conversations");
-      
-      const formattedConversations = res.data.map((conv: any) => ({
-        id: conv.id,
-        phone: conv.phone,
-        name: conv.title || conv.phone,
-        lastMessage: conv.messages[conv.messages.length - 1]?.content || "Iniciou um bate-papo",
-        time: new Date(conv.updatedAt),
-        status: "ASSISTING",
-        messages: conv.messages.map((msg: any) => ({
-          role: msg.role === 'assistant' ? 'assistant' : 'user',
-          content: msg.content,
-          time: new Date(msg.createdAt)
-        }))
-      }));
+      setIsLoadingChats(true);
+      setConfigError(false);
+      const res = await fetch("/api/whatsapp/chats");
+      const data = await res.json();
 
-      setConversations(formattedConversations);
-    } catch (error) {
-      console.error("Failed to fetch conversations", error);
-      toast({ title: "Erro", description: "Não foi possível carregar o histórico do WhatsApp.", variant: "destructive" });
+      if (!res.ok) {
+        if (data?.error?.includes("não configurada")) setConfigError(true);
+        throw new Error(data?.error || "Erro ao buscar conversas");
+      }
+
+      const formatted: Chat[] = data
+        .filter((c: any) => c.remoteJid && !c.remoteJid.includes("@g.us"))
+        .map((c: any) => ({
+          id: c.id || c.remoteJid,
+          remoteJid: c.remoteJid,
+          name: c.pushName || c.name || formatPhone(c.remoteJid),
+          lastMessage: c.lastMessage?.message?.conversation || c.lastMessage?.message?.extendedTextMessage?.text || "...",
+          lastMessageTime: c.lastMessage?.messageTimestamp ? new Date(c.lastMessage.messageTimestamp * 1000) : null,
+          unread: c.unreadCount || 0,
+        }))
+        .sort((a: Chat, b: Chat) => {
+          if (!a.lastMessageTime) return 1;
+          if (!b.lastMessageTime) return -1;
+          return b.lastMessageTime.getTime() - a.lastMessageTime.getTime();
+        });
+
+      setChats(formatted);
+    } catch (error: any) {
+      toast({ title: "Erro", description: error.message || "Não foi possível carregar conversas.", variant: "destructive" });
     } finally {
-      setIsLoading(false);
+      setIsLoadingChats(false);
+    }
+  }, [toast]);
+
+  useEffect(() => {
+    fetchChats();
+  }, [fetchChats]);
+
+  const fetchMessages = useCallback(async (chat: Chat) => {
+    try {
+      setIsLoadingMsgs(true);
+      const res = await fetch(`/api/whatsapp/messages?remoteJid=${encodeURIComponent(chat.remoteJid)}`);
+      const data = await res.json();
+      if (!res.ok) throw new Error(data?.error || "Erro ao buscar mensagens");
+      const sorted = [...data].sort((a: Message, b: Message) => a.messageTimestamp - b.messageTimestamp);
+      setMessages(sorted);
+    } catch (error: any) {
+      toast({ title: "Erro", description: error.message, variant: "destructive" });
+    } finally {
+      setIsLoadingMsgs(false);
+    }
+  }, [toast]);
+
+  useEffect(() => {
+    if (selectedChat) fetchMessages(selectedChat);
+  }, [selectedChat, fetchMessages]);
+
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [messages]);
+
+  const handleSend = async () => {
+    if (!replyText.trim() || !selectedChat || isSending) return;
+    const text = replyText.trim();
+    setReplyText("");
+    setIsSending(true);
+    try {
+      const res = await fetch("/api/whatsapp/send", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ number: formatPhone(selectedChat.remoteJid), text }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data?.error || "Erro ao enviar");
+      toast({ title: "Enviado!", description: "Mensagem enviada com sucesso." });
+      setTimeout(() => fetchMessages(selectedChat), 1500);
+    } catch (error: any) {
+      toast({ title: "Erro ao enviar", description: error.message, variant: "destructive" });
+      setReplyText(text);
+    } finally {
+      setIsSending(false);
     }
   };
 
-  const filteredConversations = conversations.filter(c => 
-    c.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
-    c.phone.includes(searchTerm)
+  const filteredChats = chats.filter(c =>
+    c.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    formatPhone(c.remoteJid).includes(searchTerm)
   );
 
   return (
-    <div className="p-6 h-[calc(100vh-100px)] flex flex-col gap-6">
-      <div className="flex justify-between items-center">
+    <div className="p-6 h-[calc(100vh-64px)] flex flex-col gap-4">
+      {/* Header */}
+      <div className="flex justify-between items-center shrink-0">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight text-slate-900 dark:text-slate-100 flex items-center gap-2">
-            <Bot className="h-8 w-8 text-blue-600" />
-            Maya - Assistente Virtual
+          <h1 className="text-2xl font-bold flex items-center gap-2">
+            <Bot className="h-7 w-7 text-orange-500" />
+            Maya — Inbox WhatsApp
           </h1>
-          <p className="text-slate-500 dark:text-slate-400">
-            Monitore e gerencie as conversas da sua assistente virtual via n8n.
-          </p>
+          <p className="text-sm text-slate-500">Conversas em tempo real via Evolution API</p>
         </div>
         <div className="flex gap-2">
-          <Button variant="outline" onClick={fetchConversations}>
-            <RefreshCcw className="h-4 w-4 mr-2" />
+          <Button variant="outline" size="sm" onClick={fetchChats} disabled={isLoadingChats}>
+            <RefreshCcw className={`h-4 w-4 mr-2 ${isLoadingChats ? "animate-spin" : ""}`} />
             Atualizar
           </Button>
-          <Button className="bg-blue-600 hover:bg-blue-700" onClick={() => { window.location.href = "/settings"; }}>
-            Configurar Assistente
-          </Button>
+          <Link href="/integrations">
+            <Button variant="outline" size="sm">
+              <Settings className="h-4 w-4 mr-2" />
+              Integrações
+            </Button>
+          </Link>
         </div>
       </div>
 
-      <div className="grid grid-cols-12 gap-6 flex-1 overflow-hidden">
-        {/* Lista de Conversas */}
+      {/* Config error banner */}
+      {configError && (
+        <div className="flex items-center gap-3 p-4 rounded-xl border border-orange-500/30 bg-orange-500/10 text-sm shrink-0">
+          <AlertCircle className="h-5 w-5 text-orange-400 shrink-0" />
+          <span>Evolution API não configurada. Configure a URL e a chave em <Link href="/integrations" className="underline font-medium">Integrações</Link>.</span>
+        </div>
+      )}
+
+      {/* Main layout */}
+      <div className="grid grid-cols-12 gap-4 flex-1 overflow-hidden">
+        {/* Lista de conversas */}
         <Card className="col-span-4 flex flex-col overflow-hidden">
-          <CardHeader className="pb-3">
+          <CardHeader className="pb-2 shrink-0">
             <div className="relative">
-              <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-slate-500" />
+              <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-slate-400" />
               <Input
-                placeholder="Buscar por nome ou telefone..."
+                placeholder="Buscar conversa..."
                 className="pl-9 bg-slate-50 dark:bg-slate-900 border-none"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
@@ -106,101 +204,144 @@ export default function AIAgentPage() {
             </div>
           </CardHeader>
           <ScrollArea className="flex-1">
-            <div className="p-4 pt-0 space-y-2">
-              {filteredConversations.map((chat) => (
-                <div
-                  key={chat.id}
-                  onClick={() => setSelectedChat(chat)}
-                  className={`p-3 rounded-lg cursor-pointer transition-all border ${
-                    selectedChat?.id === chat.id 
-                      ? "bg-blue-50 border-blue-200 dark:bg-blue-900/20 dark:border-blue-800" 
-                      : "hover:bg-slate-50 dark:hover:bg-slate-900 border-transparent"
-                  }`}
-                >
-                  <div className="flex justify-between items-start mb-1">
-                    <span className="font-semibold text-sm truncate">{chat.name}</span>
-                    <span className="text-[10px] text-slate-500">
-                      {format(chat.time, "HH:mm", { locale: ptBR })}
-                    </span>
-                  </div>
-                  <div className="text-xs text-slate-500 truncate mb-2">
-                    {chat.phone}
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <p className="text-xs text-slate-600 dark:text-slate-400 truncate flex-1 mr-2">
-                      {chat.lastMessage}
-                    </p>
-                    <Badge variant={chat.status === "ASSISTING" ? "default" : "secondary"} className="text-[10px] px-1.5 py-0 h-4">
-                      {chat.status === "ASSISTING" ? "Ativa" : "Finalizada"}
-                    </Badge>
-                  </div>
+            <div className="px-3 pb-3 space-y-1">
+              {isLoadingChats ? (
+                <div className="flex items-center justify-center py-12">
+                  <Loader2 className="h-6 w-6 animate-spin text-slate-400" />
                 </div>
-              ))}
+              ) : filteredChats.length === 0 ? (
+                <p className="text-center text-sm text-slate-400 py-12">Nenhuma conversa encontrada</p>
+              ) : (
+                filteredChats.map((chat) => (
+                  <div
+                    key={chat.remoteJid}
+                    onClick={() => setSelectedChat(chat)}
+                    className={`p-3 rounded-lg cursor-pointer transition-all border ${
+                      selectedChat?.remoteJid === chat.remoteJid
+                        ? "bg-orange-50 border-orange-200 dark:bg-orange-900/20 dark:border-orange-800"
+                        : "hover:bg-slate-50 dark:hover:bg-slate-900 border-transparent"
+                    }`}
+                  >
+                    <div className="flex justify-between items-start mb-0.5">
+                      <span className="font-semibold text-sm truncate flex-1 mr-2">{chat.name}</span>
+                      <span className="text-[10px] text-slate-400 shrink-0">
+                        {chat.lastMessageTime ? formatTime(chat.lastMessageTime.getTime() / 1000) : ""}
+                      </span>
+                    </div>
+                    <div className="flex items-center justify-between gap-2">
+                      <p className="text-xs text-slate-500 truncate flex-1">{chat.lastMessage}</p>
+                      {chat.unread > 0 && (
+                        <Badge className="h-4 min-w-4 text-[10px] px-1 bg-orange-500 shrink-0">{chat.unread}</Badge>
+                      )}
+                    </div>
+                    <p className="text-[10px] text-slate-400 mt-0.5">
+                      <Phone className="inline h-2.5 w-2.5 mr-1" />
+                      {formatPhone(chat.remoteJid)}
+                    </p>
+                  </div>
+                ))
+              )}
             </div>
           </ScrollArea>
         </Card>
 
-        {/* Chat Selecionado */}
+        {/* Área de chat */}
         <Card className="col-span-8 flex flex-col overflow-hidden">
           {selectedChat ? (
             <>
-              <CardHeader className="border-b py-3 flex flex-row justify-between items-center bg-slate-50/50 dark:bg-slate-900/50">
-                <div className="flex items-center gap-3">
-                  <div className="h-10 w-10 rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center">
-                    <User className="h-6 w-6 text-blue-600" />
+              {/* Header do chat */}
+              <CardHeader className="border-b py-3 shrink-0 bg-slate-50/50 dark:bg-slate-900/50">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className="h-10 w-10 rounded-full bg-orange-100 dark:bg-orange-900/30 flex items-center justify-center">
+                      <User className="h-5 w-5 text-orange-600" />
+                    </div>
+                    <div>
+                      <CardTitle className="text-base">{selectedChat.name}</CardTitle>
+                      <CardDescription className="text-xs flex items-center gap-1">
+                        <Phone className="h-3 w-3" /> {formatPhone(selectedChat.remoteJid)}
+                      </CardDescription>
+                    </div>
                   </div>
-                  <div>
-                    <CardTitle className="text-base">{selectedChat.name}</CardTitle>
-                    <CardDescription className="text-xs flex items-center gap-1">
-                      <Phone className="h-3 w-3" /> {selectedChat.phone}
-                    </CardDescription>
-                  </div>
-                </div>
-                <div className="flex gap-2">
-                  <Button variant="outline" size="sm" onClick={() => window.open(`https://wa.me/${selectedChat.phone}`, '_blank')}>
-                    <ExternalLink className="h-4 w-4 mr-2" />
-                    Abrir no WhatsApp
-                  </Button>
-                  <Button variant="destructive" size="sm">
-                    Pausar Maya
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => fetchMessages(selectedChat)}
+                    disabled={isLoadingMsgs}
+                  >
+                    <RefreshCcw className={`h-3 w-3 mr-1 ${isLoadingMsgs ? "animate-spin" : ""}`} />
+                    Atualizar
                   </Button>
                 </div>
               </CardHeader>
-              <ScrollArea className="flex-1 p-4 bg-slate-50/30 dark:bg-slate-950/30">
-                <div className="space-y-4">
-                  {selectedChat.messages.map((msg: any, idx: number) => (
-                    <div key={idx} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-                      <div className={`max-w-[80%] rounded-2xl px-4 py-2 text-sm shadow-sm ${
-                        msg.role === 'user' 
-                          ? 'bg-blue-600 text-white rounded-tr-none' 
-                          : 'bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 rounded-tl-none border border-slate-200 dark:border-slate-800'
-                      }`}>
-                        {msg.content}
-                        <div className={`text-[10px] mt-1 ${msg.role === 'user' ? 'text-blue-100' : 'text-slate-400'}`}>
-                          {format(msg.time, "HH:mm")}
-                        </div>
-                      </div>
+
+              {/* Mensagens */}
+              <ScrollArea className="flex-1 bg-slate-50/30 dark:bg-slate-950/30">
+                <div className="p-4 space-y-3">
+                  {isLoadingMsgs ? (
+                    <div className="flex items-center justify-center py-12">
+                      <Loader2 className="h-6 w-6 animate-spin text-slate-400" />
                     </div>
-                  ))}
+                  ) : messages.length === 0 ? (
+                    <p className="text-center text-sm text-slate-400 py-12">Nenhuma mensagem encontrada</p>
+                  ) : (
+                    messages.map((msg) => {
+                      const isFromMe = msg.key.fromMe;
+                      const text = getMessageText(msg);
+                      return (
+                        <div key={msg.key.id} className={`flex ${isFromMe ? "justify-end" : "justify-start"}`}>
+                          <div className={`max-w-[75%] rounded-2xl px-3 py-2 text-sm shadow-sm ${
+                            isFromMe
+                              ? "bg-orange-500 text-white rounded-tr-none"
+                              : "bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 rounded-tl-none border border-slate-200 dark:border-slate-800"
+                          }`}>
+                            {!isFromMe && msg.pushName && (
+                              <p className="text-[10px] font-semibold text-orange-500 mb-0.5">{msg.pushName}</p>
+                            )}
+                            <p className="whitespace-pre-wrap break-words">{text}</p>
+                            <p className={`text-[10px] mt-1 text-right ${isFromMe ? "text-orange-100" : "text-slate-400"}`}>
+                              {formatTime(msg.messageTimestamp)}
+                            </p>
+                          </div>
+                        </div>
+                      );
+                    })
+                  )}
+                  <div ref={messagesEndRef} />
                 </div>
               </ScrollArea>
-              <div className="p-4 border-t bg-white dark:bg-slate-950">
-                <div className="flex gap-2">
-                  <Input placeholder="Digite para assumir o chat..." className="flex-1" />
-                  <Button>Enviar</Button>
-                </div>
-                <p className="text-[10px] text-slate-400 mt-2 text-center flex items-center justify-center gap-1">
-                  <ShieldCheck className="h-3 w-3" /> 
-                  Maya está ativa neste chat. Se você enviar uma mensagem, ela será pausada automaticamente.
+
+              {/* Input de resposta */}
+              <div className="p-3 border-t bg-white dark:bg-slate-950 shrink-0">
+                <form
+                  onSubmit={(e) => { e.preventDefault(); handleSend(); }}
+                  className="flex gap-2"
+                >
+                  <Input
+                    placeholder="Digite sua mensagem..."
+                    value={replyText}
+                    onChange={(e) => setReplyText(e.target.value)}
+                    disabled={isSending}
+                    className="flex-1"
+                  />
+                  <Button type="submit" disabled={isSending || !replyText.trim()} className="bg-orange-500 hover:bg-orange-600 shrink-0">
+                    {isSending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
+                  </Button>
+                </form>
+                <p className="text-[10px] text-slate-400 mt-1.5 text-center">
+                  Mensagens enviadas aqui saem diretamente pelo WhatsApp via Evolution API
                 </p>
               </div>
             </>
           ) : (
-            <div className="flex-1 flex flex-col items-center justify-center text-slate-500 gap-4">
+            <div className="flex-1 flex flex-col items-center justify-center text-slate-400 gap-4">
               <div className="h-20 w-20 rounded-full bg-slate-100 dark:bg-slate-900 flex items-center justify-center">
                 <MessageSquare className="h-10 w-10 text-slate-300" />
               </div>
-              <p>Selecione uma conversa para visualizar os logs da Maya.</p>
+              <div className="text-center">
+                <p className="font-medium">Selecione uma conversa</p>
+                <p className="text-sm">As mensagens aparecerão aqui</p>
+              </div>
             </div>
           )}
         </Card>
