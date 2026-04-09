@@ -1,20 +1,20 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { 
-  DndContext, 
-  DragOverlay, 
-  closestCorners, 
-  KeyboardSensor, 
-  PointerSensor, 
-  useSensor, 
-  useSensors
+import {
+  DndContext,
+  DragOverlay,
+  closestCorners,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  useDroppable
 } from "@dnd-kit/core";
 import type { DragStartEvent, DragOverEvent, DragEndEvent } from "@dnd-kit/core";
-import { 
-  arrayMove, 
-  SortableContext, 
-  sortableKeyboardCoordinates, 
+import {
+  SortableContext,
+  sortableKeyboardCoordinates,
   verticalListSortingStrategy,
   useSortable
 } from "@dnd-kit/sortable";
@@ -155,18 +155,18 @@ const onDragOver = (event: DragOverEvent) => {
 const onDragEnd = (event: DragEndEvent) => {
   const { active, over } = event;
   setActiveId(null);
-  if (!over) return;
+  setDragOriginContainer(null);
+  if (!over || !dragOriginContainer) return;
 
   const activeId = active.id as string;
   const overId = over.id as string;
 
-  const overContainer = over.data.current?.sortable?.containerId || (overId in leads ? overId : findContainer(overId));
+  // Se cair sobre um card: usa containerId do sortable. Se cair sobre coluna vazia: overId já é o id da coluna.
+  const overContainer = over.data.current?.sortable?.containerId ?? overId;
 
-  if (overContainer && dragOriginContainer && dragOriginContainer !== overContainer) {
+  if (overContainer && overContainer !== dragOriginContainer) {
     updateLeadStatus(activeId, overContainer);
   }
-
-  setDragOriginContainer(null);
 };
 
   const findContainer = (id: string) => {
@@ -225,7 +225,7 @@ const onDragEnd = (event: DragEndEvent) => {
                 </div>
               </div>
 
-              <div className="bg-muted/30 rounded-xl p-3 flex-1 flex flex-col gap-3 min-h-[150px] border-2 border-dashed border-transparent hover:border-muted-foreground/20 transition-colors">
+              <DroppableColumn id={stage.id}>
                 <SortableContext
                   id={stage.id}
                   items={leads[stage.id]?.map(l => l.id) || []}
@@ -235,7 +235,7 @@ const onDragEnd = (event: DragEndEvent) => {
                     <SortableItem key={lead.id} lead={lead} />
                   ))}
                 </SortableContext>
-              </div>
+              </DroppableColumn>
             </div>
           ))}
         </div>
@@ -249,6 +249,21 @@ const onDragEnd = (event: DragEndEvent) => {
           ) : null}
         </DragOverlay>
       </DndContext>
+    </div>
+  );
+}
+
+function DroppableColumn({ id, children }: { id: string; children: React.ReactNode }) {
+  const { setNodeRef, isOver } = useDroppable({ id });
+  return (
+    <div
+      ref={setNodeRef}
+      className={cn(
+        "rounded-xl p-3 flex-1 flex flex-col gap-3 min-h-[150px] border-2 border-dashed transition-colors",
+        isOver ? "border-orange-400 bg-orange-500/5" : "border-transparent bg-muted/30 hover:border-muted-foreground/20"
+      )}
+    >
+      {children}
     </div>
   );
 }
