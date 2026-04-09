@@ -52,6 +52,7 @@ export default function FunnelPage() {
   const [leads, setLeads] = useState<Record<string, Lead[]>>({});
   const [isLoading, setIsLoading] = useState(true);
   const [activeId, setActiveId] = useState<string | null>(null);
+  const [dragOriginContainer, setDragOriginContainer] = useState<string | null>(null);
   const { toast } = useToast();
 
   const sensors = useSensors(
@@ -106,8 +107,10 @@ export default function FunnelPage() {
   };
 
   const onDragStart = (event: DragStartEvent) => {
-  setActiveId(event.active.id as string);
-};
+    const id = event.active.id as string;
+    setActiveId(id);
+    setDragOriginContainer(findContainer(id) || null);
+  };
 
 const onDragOver = (event: DragOverEvent) => {
   const { active, over } = event;
@@ -151,21 +154,19 @@ const onDragOver = (event: DragOverEvent) => {
 
 const onDragEnd = (event: DragEndEvent) => {
   const { active, over } = event;
+  setActiveId(null);
   if (!over) return;
 
   const activeId = active.id as string;
   const overId = over.id as string;
 
-  const activeContainer = findContainer(activeId);
-  const overContainer = findContainer(overId);
+  const overContainer = over.data.current?.sortable?.containerId || (overId in leads ? overId : findContainer(overId));
 
-  if (!activeContainer || !overContainer || activeContainer !== overContainer) {
-    if (activeContainer && overContainer) {
-      updateLeadStatus(activeId, overContainer);
-    }
+  if (overContainer && dragOriginContainer && dragOriginContainer !== overContainer) {
+    updateLeadStatus(activeId, overContainer);
   }
 
-  setActiveId(null);
+  setDragOriginContainer(null);
 };
 
   const findContainer = (id: string) => {
