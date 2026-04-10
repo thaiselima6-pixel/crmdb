@@ -4,7 +4,8 @@
       "Bash(npx prisma:*)",
       "WebSearch",
       "Bash(curl -s -X GET \"https://httpseasyn8n.uazapi.com/send/text\" -H \"Token: 6765464e-9859-479f-8c78-313f0e01d29f\")",
-      "WebFetch(domain:github.com)"
+      "WebFetch(domain:github.com)",
+      "Bash(npx tsc:*)"
     ]
   }
 }

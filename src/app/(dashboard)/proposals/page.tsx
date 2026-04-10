@@ -70,174 +70,71 @@ export default function ProposalsPage() {
       name: "Social Media",
       content: `PROPOSTA - GESTÃO DE REDES SOCIAIS
 CLIENTE: {{client_name}}
-SERVIÇO: {{title}}
 DATA: {{date}}
 
-📱 PACOTE ESCOLHIDO
-{{package_name}} - {{posts_per_week}} posts/semana
+📱 PACOTE
+{{package_name}} — {{posts_per_week}} posts/semana
 
-✨ O QUE VOCÊ RECEBE
-CRIAÇÃO DE CONTEÚDO
+O QUE ESTÁ INCLUÍDO
 ✓ {{total_posts}} posts/mês (feed)
 ✓ {{stories_per_week}} stories/semana
 ✓ {{reels_per_month}} reels/mês
-✓ Copies persuasivas
-✓ Design profissional
-✓ Hashtags estratégicas
-
-GESTÃO E ENGAJAMENTO
-✓ Agendamento otimizado
-✓ Interação com seguidores
-✓ Resposta a comentários/DMs
-✓ Curadoria de conteúdo UGC
-✓ Monitoramento de menções
-
-ESTRATÉGIA
-✓ Calendário editorial mensal
-✓ Análise de concorrência
-✓ Sugestões de campanhas
-✓ Otimização de bio/perfil
-
-RELATÓRIOS
-✓ Dashboard mensal
-✓ Análise de métricas
-✓ Insights e recomendações
+✓ Copies + design profissional
+✓ Agendamento e gestão de engajamento
+✓ Relatório mensal de desempenho
 
 💰 INVESTIMENTO
 R$ {{value}}/mês
 
-Pagamento recorrente via:
-- PIX (automático)
-- Boleto
-- Cartão de crédito
-
-📋 PROCESSO
-→ Briefing inicial (cores, tom de voz, valores)
-→ Criação do calendário mensal
-→ Aprovação do cliente
-→ Agendamento e publicação
-→ Gestão diária
-→ Relatório mensal
-
-⚡ BÔNUS INCLUSOS
-→ Banco de hashtags personalizado
-→ Templates Canva editáveis
-→ Suporte via WhatsApp
-→ Consultoria estratégica mensal
-
-🎯 PARA COMEÇAR
-Responda "SIM, VAMOS!" e enviaremos:
-1. Contrato
-2. Questionário de briefing
-3. Link de pagamento
-
+✅ PRÓXIMOS PASSOS
+Responda "SIM, VAMOS!" para receber contrato, briefing e link de pagamento.
 Início: {{start_date}}
 
-{{your_name}}
-{{your_company}}
-{{your_phone}} | {{your_email}}`,
+{{your_name}} | {{your_company}} | {{your_phone}}`,
       isSuggested: true
     },
     {
       id: "suggested-web-dev",
       name: "Desenvolvimento Web",
-      content: `PROPOSTA TÉCNICA - DESENVOLVIMENTO WEB
+      content: `PROPOSTA - DESENVOLVIMENTO WEB
 CLIENTE: {{client_name}}
-PROJETO: {{title}}
-REF: {{proposal_id}}
 DATA: {{date}}
 
-🎯 OBJETIVO DO PROJETO
+🎯 OBJETIVO
 {{project_description}}
 
-🔧 ESCOPO TÉCNICO
-FUNCIONALIDADES PRINCIPAIS
+🔧 ESCOPO
 ✓ {{feature_1}}
 ✓ {{feature_2}}
 ✓ {{feature_3}}
 ✓ {{feature_4}}
 ✓ {{feature_5}}
 
-PÁGINAS/TELAS
-→ {{page_1}}
-→ {{page_2}}
-→ {{page_3}}
-→ {{page_4}}
-
-INTEGRAÇÕES
-→ {{integration_1}}
-→ {{integration_2}}
-→ {{integration_3}}
-
-TECNOLOGIAS
-→ Frontend: {{frontend_tech}}
-→ Backend: {{backend_tech}}
-→ Banco de Dados: {{database}}
-→ Hosting: {{hosting}}
-
 📦 ENTREGAS
-1. Protótipo navegável (Figma)
-2. Sistema completo desenvolvido
-3. Testes de qualidade
-4. Deploy em produção
-5. Documentação técnica
-6. Treinamento da equipe
-7. 30 dias de suporte pós-entrega
+→ Protótipo navegável (Figma)
+→ Sistema completo + testes
+→ Deploy em produção
+→ Documentação e treinamento
+→ 30 dias de suporte pós-entrega
 
-📅 CRONOGRAMA
-FASE 1 (Semanas 1-2)
-→ Levantamento de requisitos
-→ Arquitetura e prototipagem
-→ Aprovação do design
-
-FASE 2 (Semanas 3-6)
-→ Desenvolvimento frontend
-→ Desenvolvimento backend
-→ Integrações
-
-FASE 3 (Semanas 7-8)
-→ Testes e ajustes
-→ Homologação
-→ Deploy
-
-PRAZO TOTAL: {{total_weeks}} semanas
+📅 PRAZO
+{{total_weeks}} semanas
 
 💰 INVESTIMENTO
-Valor do Projeto: R$ {{value}}
+R$ {{value}}
 
-FORMA DE PAGAMENTO:
-→ 30% na aprovação (R$ {{value_30}})
-→ 40% na entrega do protótipo (R$ {{value_40}})
-→ 30% no go-live (R$ {{value_30_final}})
+Pagamento:
+→ 30% na aprovação — R$ {{value_30}}
+→ 40% na entrega do protótipo — R$ {{value_40}}
+→ 30% no go-live — R$ {{value_30_final}}
 
-🛡️ GARANTIAS
-✓ Código limpo e documentado
-✓ Responsive design (mobile/tablet/desktop)
-✓ Otimização de performance
-✓ Segurança (HTTPS, validações, etc)
-✓ SEO básico implementado
-✓ 30 dias de suporte incluso
-✓ Garantia contra bugs por 90 dias
-
-⚠️ NÃO INCLUSO
-→ Criação de conteúdo/textos
-→ Banco de imagens premium
-→ Suporte após 30 dias (contratar separado)
-→ Alterações fora do escopo
-
-✅ ACEITE
+✅ PRÓXIMOS PASSOS
 Validade: 15 dias
+1. Aprovação da proposta
+2. Assinatura do contrato
+3. Pagamento do sinal
 
-Para iniciar:
-1. Aprovar proposta
-2. Assinar contrato
-3. Efetuar pagamento do sinal
-
-Link aprovação: {{approval_link}}
-
-{{your_name}}
-{{your_company}}
-{{your_phone}} | {{your_email}}`,
+{{your_name}} | {{your_company}} | {{your_phone}}`,
       isSuggested: true
     },
     {
@@ -245,58 +142,30 @@ Link aprovação: {{approval_link}}
       name: "Gestão de Tráfego Pago",
       content: `PROPOSTA - GESTÃO DE TRÁFEGO PAGO
 CLIENTE: {{client_name}}
-PROJETO: {{title}}
 DATA: {{date}}
 
 🎯 OBJETIVO
 {{campaign_objective}}
 
-📊 O QUE ESTÁ INCLUÍDO
-✓ ESTRATÉGIA
-  → Análise do público-alvo
-  → Definição de personas
-  → Pesquisa de palavras-chave
-  → Mapeamento da jornada do cliente
-
-✓ CRIAÇÃO
-  → Desenvolvimento de copy persuasivo
-  → Criação/curadoria de imagens
-  → Testes A/B de anúncios
-  → Landing pages (se necessário)
-
-✓ GESTÃO TÉCNICA
-  → Configuração de campanhas
-  → Pixel/Tag Manager
-  → Otimização diária
-  → Testes contínuos
-  → Ajustes de lance
-
-✓ RELATÓRIOS
-  → Dashboard em tempo real
-  → Relatórios semanais
-  → Reuniões quinzenais
-  → Recomendações estratégicas
-
-💰 INVESTIMENTO
-Gestão Profissional: R$ {{value}}/mês
-+ Budget de Mídia: R$ {{media_budget}}/mês
-TOTAL MENSAL: R$ {{total_monthly}}
-
 📈 PLATAFORMAS
 {{platforms}}
 
-⏱️ TIMELINE
-Dias 1-7: Setup + Estratégia
-Dias 8-14: Criação de campanhas
-Dia 15: Lançamento
-Dia 30: Primeira otimização
-Dia 60: Escala de resultados
+O QUE ESTÁ INCLUÍDO
+✓ Estratégia e definição de público-alvo
+✓ Criação e gestão de campanhas
+✓ Otimização diária + testes A/B
+✓ Configuração de Pixel / Tag Manager
+✓ Relatórios semanais com recomendações
+
+💰 INVESTIMENTO
+Gestão: R$ {{value}}/mês
+Budget de mídia: R$ {{media_budget}}/mês
+Total: R$ {{total_monthly}}/mês
 
 ✅ PRÓXIMOS PASSOS
 1. Aprovação da proposta
-2. Envio de acessos (Meta Business, Google Ads)
-3. Kickoff meeting
-4. Início das campanhas
+2. Envio de acessos (Meta Business / Google Ads)
+3. Kickoff e início das campanhas
 
 {{your_name}} | {{your_phone}} | {{your_email}}`,
       isSuggested: true
@@ -735,103 +604,45 @@ Dia 60: Escala de resultados
                   className="text-xs text-primary gap-1"
                   onClick={() => {
                     setTemplateName("Desenvolvimento Web");
-                    setTemplateContent(`PROPOSTA TÉCNICA - DESENVOLVIMENTO WEB
+                    setTemplateContent(`PROPOSTA - DESENVOLVIMENTO WEB
 CLIENTE: {{client_name}}
-PROJETO: {{title}}
-REF: {{proposal_id}}
 DATA: {{date}}
 
-🎯 OBJETIVO DO PROJETO
+🎯 OBJETIVO
 {{project_description}}
 
-🔧 ESCOPO TÉCNICO
-FUNCIONALIDADES PRINCIPAIS
+🔧 ESCOPO
 ✓ {{feature_1}}
 ✓ {{feature_2}}
 ✓ {{feature_3}}
 ✓ {{feature_4}}
 ✓ {{feature_5}}
 
-PÁGINAS/TELAS
-→ {{page_1}}
-→ {{page_2}}
-→ {{page_3}}
-→ {{page_4}}
-
-INTEGRAÇÕES
-→ {{integration_1}}
-→ {{integration_2}}
-→ {{integration_3}}
-
-TECNOLOGIAS
-→ Frontend: {{frontend_tech}}
-→ Backend: {{backend_tech}}
-→ Banco de Dados: {{database}}
-→ Hospedagem: {{hosting}}
-
 📦 ENTREGAS
-1. Protótipo navegável (Figma)
-2. Sistema completo desenvolvido
-3. Testes de qualidade
-4. Deploy em produção
-5. Documentação técnica
-6. Treinamento da equipe
-7. 30 dias de suporte pós-entrega
+→ Protótipo navegável (Figma)
+→ Sistema completo + testes
+→ Deploy em produção
+→ Documentação e treinamento
+→ 30 dias de suporte pós-entrega
 
-📅 CRONOGRAMA
-FASE 1 (Semanas 1-2)
-→ Levantamento de requisitos
-→ Arquitetura e prototipagem
-→ Aprovação do design
-
-FASE 2 (Semanas 3-6)
-→ Desenvolvimento frontend
-→ Desenvolvimento backend
-→ Integrações
-
-FASE 3 (Semanas 7-8)
-→ Testes e ajustes
-→ Homologação
-→ Deploy
-
-PRAZO TOTAL: {{total_weeks}} semanas
+📅 PRAZO
+{{total_weeks}} semanas
 
 💰 INVESTIMENTO
-Valor do Projeto: R$ {{value}}
+R$ {{value}}
 
-FORMA DE PAGAMENTO:
-→ 30% na aprovação (R$ {{value_30}})
-→ 40% na entrega do protótipo (R$ {{value_40}})
-→ 30% no go-live (R$ {{value_30_final}})
+Pagamento:
+→ 30% na aprovação — R$ {{value_30}}
+→ 40% na entrega do protótipo — R$ {{value_40}}
+→ 30% no go-live — R$ {{value_30_final}}
 
-🛡️ GARANTIAS
-✓ Código limpo e documentado
-✓ Responsive design (mobile/tablet/desktop)
-✓ Otimização de performance
-✓ Segurança (HTTPS, validações, etc)
-✓ SEO básico implementado
-✓ 30 dias de suporte incluso
-✓ Garantia contra bugs por 90 dias
-
-⚠️ NÃO INCLUSO
-→ Criação de conteúdo/textos
-→ Banco de imagens premium
-→ Suporte após 30 dias (contratar separado)
-→ Alterações fora do escopo
-
-✅ ACEITE
+✅ PRÓXIMOS PASSOS
 Validade: 15 dias
+1. Aprovação da proposta
+2. Assinatura do contrato
+3. Pagamento do sinal
 
-Para iniciar:
-1. Aprovar proposta
-2. Assinar contrato
-3. Efetuar pagamento do sinal
-
-Link aprovação: {{approval_link}}
-
-{{your_name}}
-{{your_company}}
-{{your_phone}} | {{your_email}}`);
+{{your_name}} | {{your_company}} | {{your_phone}}`);
                   }}
                 >
                   <Wand2 className="h-3 w-3" /> Modelo Web
@@ -844,72 +655,27 @@ Link aprovação: {{approval_link}}
                     setTemplateName("Social Media");
                     setTemplateContent(`PROPOSTA - GESTÃO DE REDES SOCIAIS
 CLIENTE: {{client_name}}
-SERVIÇO: {{title}}
 DATA: {{date}}
 
-📱 PACOTE ESCOLHIDO
-{{package_name}} - {{posts_per_week}} posts/semana
+📱 PACOTE
+{{package_name}} — {{posts_per_week}} posts/semana
 
-✨ O QUE VOCÊ RECEBE
-CRIAÇÃO DE CONTEÚDO
+O QUE ESTÁ INCLUÍDO
 ✓ {{total_posts}} posts/mês (feed)
 ✓ {{stories_per_week}} stories/semana
 ✓ {{reels_per_month}} reels/mês
-✓ Copies persuasivas
-✓ Design profissional
-✓ Hashtags estratégicas
-
-GESTÃO E ENGAJAMENTO
-✓ Agendamento otimizado
-✓ Interação com seguidores
-✓ Resposta a comentários/DMs
-✓ Curadoria de conteúdo UGC
-✓ Monitoramento de menções
-
-ESTRATÉGIA
-✓ Calendário editorial mensal
-✓ Análise de concorrência
-✓ Sugestões de campanhas
-✓ Otimização de bio/perfil
-
-RELATÓRIOS
-✓ Dashboard mensal
-✓ Análise de métricas
-✓ Insights e recomendações
+✓ Copies + design profissional
+✓ Agendamento e gestão de engajamento
+✓ Relatório mensal de desempenho
 
 💰 INVESTIMENTO
 R$ {{value}}/mês
 
-Pagamento recorrente via:
-- PIX (automático)
-- Boleto
-- Cartão de crédito
-
-📋 PROCESSO
-→ Briefing inicial (cores, tom de voz, valores)
-→ Criação do calendário mensal
-→ Aprovação do cliente
-→ Agendamento e publicação
-→ Gestão diária
-→ Relatório mensal
-
-⚡ BÔNUS INCLUSOS
-→ Banco de hashtags personalizado
-→ Templates Canva editáveis
-→ Suporte via WhatsApp
-→ Consultoria estratégica mensal
-
-🎯 PARA COMEÇAR
-Responda "SIM, VAMOS!" e enviaremos:
-1. Contrato
-2. Questionário de briefing
-3. Link de pagamento
-
+✅ PRÓXIMOS PASSOS
+Responda "SIM, VAMOS!" para receber contrato, briefing e link de pagamento.
 Início: {{start_date}}
 
-{{your_name}}
-{{your_company}}
-{{your_phone}} | {{your_email}}`);
+{{your_name}} | {{your_company}} | {{your_phone}}`);
                   }}
                 >
                   <Wand2 className="h-3 w-3" /> Modelo Social Media
@@ -922,58 +688,30 @@ Início: {{start_date}}
                     setTemplateName("Gestão de Tráfego Pago");
                     setTemplateContent(`PROPOSTA - GESTÃO DE TRÁFEGO PAGO
 CLIENTE: {{client_name}}
-PROJETO: {{title}}
 DATA: {{date}}
 
 🎯 OBJETIVO
 {{campaign_objective}}
 
-📊 O QUE ESTÁ INCLUÍDO
-✓ ESTRATÉGIA
-  → Análise do público-alvo
-  → Definição de personas
-  → Pesquisa de palavras-chave
-  → Mapeamento da jornada do cliente
-
-✓ CRIAÇÃO
-  → Desenvolvimento de copy persuasivo
-  → Criação/curadoria de imagens
-  → Testes A/B de anúncios
-  → Landing pages (se necessário)
-
-✓ GESTÃO TÉCNICA
-  → Configuração de campanhas
-  → Pixel/Tag Manager
-  → Otimização diária
-  → Testes contínuos
-  → Ajustes de lance
-
-✓ RELATÓRIOS
-  → Dashboard em tempo real
-  → Relatórios semanais
-  → Reuniões quinzenais
-  → Recomendações estratégicas
-
-💰 INVESTIMENTO
-Gestão Profissional: R$ {{value}}/mês
-+ Budget de Mídia: R$ {{media_budget}}/mês
-TOTAL MENSAL: R$ {{total_monthly}}
-
 📈 PLATAFORMAS
 {{platforms}}
 
-⏱️ TIMELINE
-Dias 1-7: Setup + Estratégia
-Dias 8-14: Criação de campanhas
-Dia 15: Lançamento
-Dia 30: Primeira otimização
-Dia 60: Escala de resultados
+O QUE ESTÁ INCLUÍDO
+✓ Estratégia e definição de público-alvo
+✓ Criação e gestão de campanhas
+✓ Otimização diária + testes A/B
+✓ Configuração de Pixel / Tag Manager
+✓ Relatórios semanais com recomendações
+
+💰 INVESTIMENTO
+Gestão: R$ {{value}}/mês
+Budget de mídia: R$ {{media_budget}}/mês
+Total: R$ {{total_monthly}}/mês
 
 ✅ PRÓXIMOS PASSOS
 1. Aprovação da proposta
-2. Envio de acessos (Meta Business, Google Ads)
-3. Kickoff meeting
-4. Início das campanhas
+2. Envio de acessos (Meta Business / Google Ads)
+3. Kickoff e início das campanhas
 
 {{your_name}} | {{your_phone}} | {{your_email}}`);
                   }}
@@ -1081,247 +819,96 @@ Dia 60: Escala de resultados
                   </div>
                 </div>
 
-                <div className="border-t pt-4 mt-2">
-                  <h4 className="text-sm font-semibold mb-3">Desenvolvimento Web (Opcional)</h4>
-                  <div className="space-y-4 mb-6">
-                    <div className="space-y-2">
-                      <Label>Descrição do Projeto</Label>
-                      <Textarea 
-                        placeholder="Descreva o objetivo do site/sistema..."
-                        value={projectDescription}
-                        onChange={(e) => setProjectDescription(e.target.value)}
-                      />
-                    </div>
-                    
-                    <div className="grid grid-cols-1 gap-4">
-                      <div className="space-y-2">
-                        <Label>Funcionalidades (até 5)</Label>
-                        {features.map((f, i) => (
-                          <Input 
-                            key={i}
-                            placeholder={`Funcionalidade ${i+1}`}
-                            value={f}
-                            onChange={(e) => {
-                              const newF = [...features];
-                              newF[i] = e.target.value;
-                              setFeatures(newF);
-                            }}
-                            className="mb-1"
-                          />
-                        ))}
-                      </div>
-                      
-                      <div className="space-y-2">
-                        <Label>Páginas (até 4)</Label>
-                        {pages.map((p, i) => (
-                          <Input 
-                            key={i}
-                            placeholder={`Página ${i+1}`}
-                            value={p}
-                            onChange={(e) => {
-                              const newP = [...pages];
-                              newP[i] = e.target.value;
-                              setPages(newP);
-                            }}
-                            className="mb-1"
-                          />
-                        ))}
-                      </div>
-
-                      <div className="space-y-2">
-                        <Label>Integrações (até 3)</Label>
-                        {integrations.map((it, i) => (
-                          <Input 
-                            key={i}
-                            placeholder={`Integração ${i+1}`}
-                            value={it}
-                            onChange={(e) => {
-                              const newI = [...integrations];
-                              newI[i] = e.target.value;
-                              setIntegrations(newI);
-                            }}
-                            className="mb-1"
-                          />
-                        ))}
-                      </div>
-                    </div>
-
+                {/* Campos específicos por template */}
+                {selectedTemplate?.id === "suggested-social-media" && (
+                  <div className="border-t pt-4 mt-2 space-y-4">
+                    <h4 className="text-sm font-semibold">Social Media</h4>
                     <div className="grid grid-cols-2 gap-4">
                       <div className="space-y-2">
-                        <Label>Frontend</Label>
-                        <Input placeholder="React, Next.js, etc" value={frontendTech} onChange={(e) => setFrontendTech(e.target.value)} />
+                        <Label>Nome do Pacote</Label>
+                        <Input placeholder="Ex: Start, Pro, Gold" value={packageName} onChange={(e) => setPackageName(e.target.value)} />
                       </div>
                       <div className="space-y-2">
-                        <Label>Backend</Label>
-                        <Input placeholder="Node.js, Python, etc" value={backendTech} onChange={(e) => setBackendTech(e.target.value)} />
+                        <Label>Posts por Semana</Label>
+                        <Input type="number" placeholder="3" value={postsPerWeek} onChange={(e) => setPostsPerWeek(e.target.value)} />
                       </div>
                       <div className="space-y-2">
-                        <Label>Banco de Dados</Label>
-                        <Input placeholder="PostgreSQL, MongoDB, etc" value={database} onChange={(e) => setDatabase(e.target.value)} />
+                        <Label>Total de Posts (Mês)</Label>
+                        <Input type="number" placeholder="12" value={totalPosts} onChange={(e) => setTotalPosts(e.target.value)} />
                       </div>
                       <div className="space-y-2">
-                        <Label>Hospedagem</Label>
-                        <Input placeholder="Vercel, AWS, etc" value={hosting} onChange={(e) => setHosting(e.target.value)} />
+                        <Label>Stories por Semana</Label>
+                        <Input type="number" placeholder="5" value={storiesPerWeek} onChange={(e) => setStoriesPerWeek(e.target.value)} />
+                      </div>
+                      <div className="space-y-2">
+                        <Label>Reels por Mês</Label>
+                        <Input type="number" placeholder="4" value={reelsPerMonth} onChange={(e) => setReelsPerMonth(e.target.value)} />
+                      </div>
+                      <div className="space-y-2">
+                        <Label>Data de Início</Label>
+                        <Input placeholder="Ex: 01/05/2026" value={startDate} onChange={(e) => setStartDate(e.target.value)} />
                       </div>
                     </div>
+                  </div>
+                )}
 
+                {selectedTemplate?.id === "suggested-traffic" && (
+                  <div className="border-t pt-4 mt-2 space-y-4">
+                    <h4 className="text-sm font-semibold">Tráfego Pago</h4>
+                    <div className="space-y-2">
+                      <Label>Objetivo da Campanha</Label>
+                      <Input placeholder="Ex: Aumentar vendas online em 3x" value={campaignObjective} onChange={(e) => setCampaignObjective(e.target.value)} />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Budget de Mídia (R$)</Label>
+                      <Input type="number" placeholder="5000.00" value={mediaBudget} onChange={(e) => setMediaBudget(e.target.value)} />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Plataformas</Label>
+                      <div className="grid grid-cols-2 gap-3 pt-1">
+                        {[
+                          { id: "meta", label: "Meta Ads (FB/IG)" },
+                          { id: "google", label: "Google Ads" },
+                          { id: "linkedin", label: "LinkedIn Ads" },
+                          { id: "tiktok", label: "TikTok Ads" },
+                          { id: "youtube", label: "YouTube Ads" },
+                          { id: "pinterest", label: "Pinterest Ads" },
+                        ].map(({ id, label }) => (
+                          <div key={id} className="flex items-center space-x-2">
+                            <input
+                              type="checkbox"
+                              id={id}
+                              checked={selectedPlatforms[id as keyof typeof selectedPlatforms]}
+                              onChange={(e) => setSelectedPlatforms({ ...selectedPlatforms, [id]: e.target.checked })}
+                              className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary"
+                            />
+                            <Label htmlFor={id} className="text-sm font-normal cursor-pointer">{label}</Label>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {selectedTemplate?.id === "suggested-web-dev" && (
+                  <div className="border-t pt-4 mt-2 space-y-4">
+                    <h4 className="text-sm font-semibold">Desenvolvimento Web</h4>
+                    <div className="space-y-2">
+                      <Label>Descrição do Projeto</Label>
+                      <Textarea placeholder="Descreva o objetivo do site/sistema..." value={projectDescription} onChange={(e) => setProjectDescription(e.target.value)} />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Funcionalidades (até 5)</Label>
+                      {features.map((f, i) => (
+                        <Input key={i} placeholder={`Funcionalidade ${i + 1}`} value={f} onChange={(e) => { const n = [...features]; n[i] = e.target.value; setFeatures(n); }} className="mb-1" />
+                      ))}
+                    </div>
                     <div className="space-y-2">
                       <Label>Prazo Total (Semanas)</Label>
                       <Input type="number" placeholder="8" value={totalWeeks} onChange={(e) => setTotalWeeks(e.target.value)} />
                     </div>
                   </div>
-
-                  <h4 className="text-sm font-semibold mb-3">Campos de Social Media</h4>
-                  <div className="grid grid-cols-2 gap-4 mb-4">
-                    <div className="space-y-2">
-                      <Label>Nome do Pacote</Label>
-                      <Input 
-                        placeholder="Ex: Start, Pro, Gold"
-                        value={packageName}
-                        onChange={(e) => setPackageName(e.target.value)}
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label>Posts por Semana</Label>
-                      <Input 
-                        type="number"
-                        placeholder="3"
-                        value={postsPerWeek}
-                        onChange={(e) => setPostsPerWeek(e.target.value)}
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label>Total de Posts (Mês)</Label>
-                      <Input 
-                        type="number"
-                        placeholder="12"
-                        value={totalPosts}
-                        onChange={(e) => setTotalPosts(e.target.value)}
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label>Stories por Semana</Label>
-                      <Input 
-                        type="number"
-                        placeholder="5"
-                        value={storiesPerWeek}
-                        onChange={(e) => setStoriesPerWeek(e.target.value)}
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label>Reels por Mês</Label>
-                      <Input 
-                        type="number"
-                        placeholder="4"
-                        value={reelsPerMonth}
-                        onChange={(e) => setReelsPerMonth(e.target.value)}
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label>Data de Início</Label>
-                      <Input 
-                        placeholder="Ex: 01/03/2024"
-                        value={startDate}
-                        onChange={(e) => setStartDate(e.target.value)}
-                      />
-                    </div>
-                  </div>
-
-                  <h4 className="text-sm font-semibold mb-3">Plataformas Incluídas</h4>
-                  <div className="grid grid-cols-2 gap-3 mb-4">
-                    <div className="flex items-center space-x-2">
-                      <input 
-                        type="checkbox" 
-                        id="meta" 
-                        checked={selectedPlatforms.meta}
-                        onChange={(e) => setSelectedPlatforms({...selectedPlatforms, meta: e.target.checked})}
-                        className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary"
-                      />
-                      <Label htmlFor="meta" className="text-sm font-normal cursor-pointer">Meta Ads (FB/IG)</Label>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <input 
-                        type="checkbox" 
-                        id="google" 
-                        checked={selectedPlatforms.google}
-                        onChange={(e) => setSelectedPlatforms({...selectedPlatforms, google: e.target.checked})}
-                        className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary"
-                      />
-                      <Label htmlFor="google" className="text-sm font-normal cursor-pointer">Google Ads</Label>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <input 
-                        type="checkbox" 
-                        id="linkedin" 
-                        checked={selectedPlatforms.linkedin}
-                        onChange={(e) => setSelectedPlatforms({...selectedPlatforms, linkedin: e.target.checked})}
-                        className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary"
-                      />
-                      <Label htmlFor="linkedin" className="text-sm font-normal cursor-pointer">LinkedIn Ads</Label>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <input 
-                        type="checkbox" 
-                        id="tiktok" 
-                        checked={selectedPlatforms.tiktok}
-                        onChange={(e) => setSelectedPlatforms({...selectedPlatforms, tiktok: e.target.checked})}
-                        className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary"
-                      />
-                      <Label htmlFor="tiktok" className="text-sm font-normal cursor-pointer">TikTok Ads</Label>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <input 
-                        type="checkbox" 
-                        id="youtube" 
-                        checked={selectedPlatforms.youtube}
-                        onChange={(e) => setSelectedPlatforms({...selectedPlatforms, youtube: e.target.checked})}
-                        className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary"
-                      />
-                      <Label htmlFor="youtube" className="text-sm font-normal cursor-pointer">YouTube Ads</Label>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <input 
-                        type="checkbox" 
-                        id="pinterest" 
-                        checked={selectedPlatforms.pinterest}
-                        onChange={(e) => setSelectedPlatforms({...selectedPlatforms, pinterest: e.target.checked})}
-                        className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary"
-                      />
-                      <Label htmlFor="pinterest" className="text-sm font-normal cursor-pointer">Pinterest Ads</Label>
-                    </div>
-                  </div>
-
-                  <h4 className="text-sm font-semibold mb-3">Campos do Template (Opcional)</h4>
-                  <div className="space-y-4">
-                    <div className="space-y-2">
-                      <Label>Objetivo da Campanha</Label>
-                      <Input 
-                        placeholder="Ex: Aumentar vendas online em 3x"
-                        value={campaignObjective}
-                        onChange={(e) => setCampaignObjective(e.target.value)}
-                      />
-                    </div>
-                    <div className="grid grid-cols-2 gap-4">
-                      <div className="space-y-2">
-                        <Label>Budget de Mídia (R$)</Label>
-                        <Input 
-                          type="number"
-                          placeholder="5000.00"
-                          value={mediaBudget}
-                          onChange={(e) => setMediaBudget(e.target.value)}
-                        />
-                      </div>
-                      <div className="space-y-2">
-                        <Label>Plataforma Adicional</Label>
-                        <Input 
-                          placeholder="Ex: LinkedIn Ads"
-                          value={additionalPlatform}
-                          onChange={(e) => setAdditionalPlatform(e.target.value)}
-                        />
-                      </div>
-                    </div>
-                  </div>
-                </div>
+                )}
 
                 <div className="border-t pt-4 mt-2">
                   <h4 className="text-sm font-semibold mb-3">Suas Informações de Contato</h4>
