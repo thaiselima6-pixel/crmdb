@@ -23,7 +23,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Skeleton } from "@/components/ui/skeleton";
-import { MoreHorizontal, Mail, Phone, Building2, DollarSign, MessageSquare, Loader2 } from "lucide-react";
+import { Mail, Phone, Building2, MessageSquare, Loader2, Trash2 } from "lucide-react";
 import axios from "axios";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
@@ -86,6 +86,22 @@ export default function FunnelPage() {
       console.error("Failed to fetch funnel data", error);
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const handleDeleteLead = async (leadId: string) => {
+    try {
+      await axios.delete(`/api/leads?id=${leadId}`);
+      setLeads((prev) => {
+        const updated = { ...prev };
+        Object.keys(updated).forEach((key) => {
+          updated[key] = updated[key].filter((l) => l.id !== leadId);
+        });
+        return updated;
+      });
+      toast({ title: "Lead excluído", description: "Lead removido do funil." });
+    } catch {
+      toast({ title: "Erro ao excluir", description: "Não foi possível excluir o lead.", variant: "destructive" });
     }
   };
 
@@ -232,7 +248,7 @@ const onDragEnd = (event: DragEndEvent) => {
                   strategy={verticalListSortingStrategy}
                 >
                   {leads[stage.id]?.map((lead) => (
-                    <SortableItem key={lead.id} lead={lead} />
+                    <SortableItem key={lead.id} lead={lead} onDelete={handleDeleteLead} />
                   ))}
                 </SortableContext>
               </DroppableColumn>
@@ -268,7 +284,7 @@ function DroppableColumn({ id, children }: { id: string; children: React.ReactNo
   );
 }
 
-function SortableItem({ lead }: { lead: Lead }) {
+function SortableItem({ lead, onDelete }: { lead: Lead; onDelete: (id: string) => void }) {
   const {
     attributes,
     listeners,
@@ -286,14 +302,23 @@ function SortableItem({ lead }: { lead: Lead }) {
 
   return (
     <div ref={setNodeRef} style={style} {...attributes} {...listeners}>
-      <LeadCard lead={lead} />
+      <LeadCard lead={lead} onDelete={onDelete} />
     </div>
   );
 }
 
-function LeadCard({ lead, isOverlay }: { lead: Lead; isOverlay?: boolean }) {
+function LeadCard({ lead, isOverlay, onDelete }: { lead: Lead; isOverlay?: boolean; onDelete?: (id: string) => void }) {
   const [isGenerating, setIsGenerating] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
   const { toast } = useToast();
+
+  const handleDelete = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (!confirm(`Excluir o lead "${lead.name}"?`)) return;
+    setIsDeleting(true);
+    await onDelete?.(lead.id);
+    setIsDeleting(false);
+  };
 
   const handleFollowUp = async (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -345,19 +370,28 @@ function LeadCard({ lead, isOverlay }: { lead: Lead; isOverlay?: boolean }) {
               R$ {Number(lead.value || 0).toLocaleString('pt-BR')}
             </div>
           </div>
-          <Button
-            size="icon"
-            variant="ghost"
-            className="h-8 w-8 text-orange-600 hover:text-orange-600 hover:bg-orange-500/10 shrink-0"
-            onClick={handleFollowUp}
-            disabled={isGenerating}
-          >
-            {isGenerating ? (
-              <Loader2 className="h-4 w-4 animate-spin" />
-            ) : (
-              <MessageSquare className="h-4 w-4" />
+          <div className="flex gap-1 shrink-0">
+            <Button
+              size="icon"
+              variant="ghost"
+              className="h-8 w-8 text-orange-600 hover:bg-orange-500/10"
+              onClick={handleFollowUp}
+              disabled={isGenerating}
+            >
+              {isGenerating ? <Loader2 className="h-4 w-4 animate-spin" /> : <MessageSquare className="h-4 w-4" />}
+            </Button>
+            {!isOverlay && (
+              <Button
+                size="icon"
+                variant="ghost"
+                className="h-8 w-8 text-red-400 hover:text-red-600 hover:bg-red-500/10"
+                onClick={handleDelete}
+                disabled={isDeleting}
+              >
+                {isDeleting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
+              </Button>
             )}
-          </Button>
+          </div>
         </div>
 
         {lead.company && (
