@@ -1,184 +1,89 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { WhatsAppService } from "@/lib/whatsapp";
 
-/**
- * Webhook para integração com LeadForce (Supabase)
- * Ações: create_lead | update_status | log_conversation
- */
 export async function POST(req: Request) {
   try {
     const apiKey = req.headers.get("x-api-key");
-    if (apiKey !== process.env.N8N_API_KEY) {
+    if (!apiKey || apiKey !== process.env.LEADFORCE_API_KEY) {
       return new NextResponse("Unauthorized", { status: 401 });
     }
 
     const body = await req.json();
 
-    // Support both formats:
-    // - Our format:    { action: "create_lead", workspaceId, ... }
-    // - Lovable format: { event: "lead.created", data: { workspaceId, ... } }
-    let action = body.action;
-    let payload = body;
+    // Aceita campos em português ou inglês
+    const name    = body.name    || body.nome     || body.contact || "Lead LeadForce";
+    const phone   = body.phone   || body.telefone || body.fone    || null;
+    const email   = body.email   || "sem-email@leadforce.com";
+    const company = body.company || body.empresa  || body.negocio || null;
+    const source  = body.source  || body.origem   || "leadforce";
+    const message = body.message || body.mensagem || null;
 
-    if (!action && body.event) {
-      const eventMap: Record<string, string> = {
-        "lead.created":  "create_lead",
-        "lead.updated":  "update_status",
-        "message.sent":  "log_conversation",
-        "message.received": "log_conversation",
-      };
-      action = eventMap[body.event] || body.event;
-      payload = { ...body, ...(body.data || {}), action };
-    }
-
-    const workspaceId = payload.workspaceId;
-
+    // workspaceId pode vir no body; senão usa o primeiro workspace
+    let workspaceId: string = body.workspaceId || "";
     if (!workspaceId) {
-      return new NextResponse("workspaceId is required", { status: 400 });
+      const ws = await prisma.workspace.findFirst({ select: { id: true } });
+      if (!ws) return new NextResponse("No workspace found", { status: 400 });
+      workspaceId = ws.id;
     }
 
-    // ── ACTION: create_lead ──────────────────────────────────────────────────
-    // Called by send-whatsapp after Victor Vendas sends the first message
-    if (action === "create_lead") {
-      const { name, company, phone, email, niche, city, website, rating, personalizedMessage } = payload;
+    const workspace = await prisma.workspace.findUnique({
+      where: { id: workspaceId },
+      select: {
+        id: true,
+        name: true,
+        autoWelcomeEnabled: true,
+        whatsappUrl: true,
+        whatsappApiKey: true,
+      },
+    });
+    if (!workspace) return new NextResponse("Workspace not found", { status: 404 });
 
-      // Avoid duplicates — check by phone
-      const existing = await prisma.lead.findFirst({
-        where: { phone: phone || undefined, workspaceId },
-      });
+    // Coloca o lead no primeiro estágio do pipeline
+    const firstStage = await prisma.pipelineStage.findFirst({
+      where: { pipeline: { workspaceId } },
+      orderBy: { order: "asc" },
+      select: { id: true, pipelineId: true },
+    });
 
-      if (existing) {
-        // Update status to CONTACTED if it was NEW
-        if (existing.status === "NEW") {
-          await prisma.lead.update({
-            where: { id: existing.id },
-            data: {
-              status: "CONTACTED",
-              source: "LeadForce",
-            },
-          });
-        }
-        return NextResponse.json({ success: true, leadId: existing.id, duplicate: true });
+    const lead = await prisma.lead.create({
+      data: {
+        name,
+        phone,
+        email,
+        company,
+        source,
+        status: "NEW",
+        tags: ["LeadForce"],
+        workspaceId,
+        ...(firstStage && {
+          stageId: firstStage.id,
+          pipelineId: firstStage.pipelineId,
+        }),
+      },
+    });
+
+    // Boas-vindas automáticas via WhatsApp
+    let whatsappSent = false;
+    if (workspace.autoWelcomeEnabled && phone && workspace.whatsappUrl && workspace.whatsappApiKey) {
+      try {
+        const firstName = name.split(" ")[0];
+        const welcomeMsg =
+          message ||
+          `Olá, ${firstName}! 👋\n\nRecebi seu contato e quero te ajudar.\n\nEm breve um consultor da *${workspace.name}* entrará em contato. Pode me contar: qual é a sua maior necessidade hoje?`;
+
+        await WhatsAppService.sendMessage(workspaceId, phone, welcomeMsg);
+        whatsappSent = true;
+      } catch (err) {
+        console.error("LEADFORCE_WHATSAPP_ERROR", err);
       }
-
-      const tags: string[] = [];
-      if (niche) tags.push(niche);
-      if (rating) tags.push(`⭐ ${rating}`);
-      if (!website || website === "no_website") tags.push("Sem site");
-
-      const lead = await prisma.lead.create({
-        data: {
-          name: company || name || "Lead LeadForce",
-          company: company || null,
-          phone: phone || null,
-          email: email || "sem-email@leadforce.com",
-          source: "LeadForce",
-          status: "CONTACTED",
-          tags,
-          workspaceId,
-        },
-      });
-
-      if (personalizedMessage) {
-        await prisma.note.create({
-          data: {
-            content: `📨 Mensagem enviada pelo Victor Vendas:\n\n${personalizedMessage}`,
-            leadId: lead.id,
-          },
-        });
-      }
-
-      return NextResponse.json({ success: true, leadId: lead.id });
     }
 
-    // ── ACTION: update_status ────────────────────────────────────────────────
-    // Called by webhook-whatsapp when Maya detects intent
-    if (action === "update_status") {
-      const { phone, intent } = payload;
+    console.log(`LEADFORCE_LEAD_CREATED: ${lead.id} | WhatsApp: ${whatsappSent}`);
 
-      if (!phone) return new NextResponse("phone is required", { status: 400 });
-
-      const statusMap: Record<string, string> = {
-        interested: "QUALIFIED",
-        not_interested: "LOST",
-        question: "CONTACTED",
-        auto_reply: "CONTACTED",
-        other: "CONTACTED",
-      };
-
-      const newStatus = statusMap[intent] || "CONTACTED";
-
-      const lead = await prisma.lead.findFirst({
-        where: { phone, workspaceId },
-      });
-
-      if (!lead) {
-        return NextResponse.json({ success: false, reason: "lead not found" });
-      }
-
-      // Only upgrade status, never downgrade (QUALIFIED stays QUALIFIED)
-      const statusOrder = ["NEW", "CONTACTED", "QUALIFIED", "PROPOSAL", "NEGOTIATION", "WON", "LOST"];
-      const currentIdx = statusOrder.indexOf(lead.status);
-      const newIdx = statusOrder.indexOf(newStatus);
-
-      if (newIdx > currentIdx || newStatus === "LOST") {
-        await prisma.lead.update({
-          where: { id: lead.id },
-          data: { status: newStatus },
-        });
-      }
-
-      return NextResponse.json({ success: true, leadId: lead.id, status: newStatus });
-    }
-
-    // ── ACTION: log_conversation ─────────────────────────────────────────────
-    // Called by webhook-whatsapp to log Maya conversations in CRM
-    if (action === "log_conversation") {
-      const { phone, content, role } = payload;
-
-      if (!phone || !content || !role) {
-        return new NextResponse("phone, content and role are required", { status: 400 });
-      }
-
-      const workspace = await prisma.workspace.findUnique({ where: { id: workspaceId } });
-      if (!workspace) return new NextResponse("Invalid workspaceId", { status: 400 });
-
-      let conversation = await prisma.aIConversation.findFirst({
-        where: { workspaceId, phone },
-        orderBy: { updatedAt: "desc" },
-      });
-
-      if (!conversation) {
-        const lead = await prisma.lead.findFirst({ where: { phone, workspaceId } });
-        conversation = await prisma.aIConversation.create({
-          data: {
-            workspaceId,
-            phone,
-            title: lead?.name ? `Maya ↔ ${lead.name}` : `Maya ↔ ${phone}`,
-          },
-        });
-      }
-
-      await prisma.aIMessage.create({
-        data: {
-          conversationId: conversation.id,
-          role,
-          content,
-          metadata: { phone },
-        },
-      });
-
-      await prisma.aIConversation.update({
-        where: { id: conversation.id },
-        data: { updatedAt: new Date() },
-      });
-
-      return NextResponse.json({ success: true });
-    }
-
-    return new NextResponse("Invalid action", { status: 400 });
+    return NextResponse.json({ success: true, leadId: lead.id, whatsappSent });
   } catch (error) {
-    console.error("WEBHOOK_LEADFORCE_ERROR", error);
+    console.error("LEADFORCE_WEBHOOK_ERROR", error);
     return new NextResponse("Internal Error", { status: 500 });
   }
 }

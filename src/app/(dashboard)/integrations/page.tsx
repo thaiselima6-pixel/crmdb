@@ -8,7 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { useToast } from "@/hooks/use-toast";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
-import { Loader2, Facebook, Search as GoogleIcon, Zap, MessageSquare, Link2, Unlink, Bot, Copy, CheckCheck, Info, QrCode } from "lucide-react";
+import { Loader2, Facebook, Search as GoogleIcon, Zap, MessageSquare, Link2, Unlink, Bot, Copy, CheckCheck, Info, QrCode, Rocket } from "lucide-react";
 import { Textarea } from "@/components/ui/textarea";
 import axios from "axios";
 import { useSearchParams } from "next/navigation";
@@ -466,6 +466,87 @@ function IntegrationsContent() {
               {workspaceData.mayaEnabled
                 ? "Maya ativa — respondendo mensagens recebidas via WhatsApp automaticamente."
                 : "Maya desativada — mensagens são registradas mas não respondidas automaticamente."}
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* LeadForce Section */}
+        <Card className="border-none shadow-md md:col-span-2">
+          <CardHeader>
+            <div className="flex items-center gap-3">
+              <div className="h-10 w-10 rounded-full bg-orange-500/10 flex items-center justify-center text-orange-500">
+                <Rocket className="h-5 w-5" />
+              </div>
+              <div>
+                <CardTitle>LeadForce → CRM</CardTitle>
+                <CardDescription>
+                  Configure o webhook no LeadForce para enviar leads automaticamente ao CRM.
+                  Boas-vindas via WhatsApp são disparadas se o lead tiver telefone e o toggle estiver ativo.
+                </CardDescription>
+              </div>
+            </div>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="bg-orange-50 dark:bg-orange-950/30 border border-orange-100 dark:border-orange-900/50 rounded-lg p-4 space-y-3">
+              <div className="flex items-start gap-2 text-sm text-orange-700 dark:text-orange-300">
+                <Info className="h-4 w-4 shrink-0 mt-0.5" />
+                <div>
+                  <p className="font-semibold">Como conectar o LeadForce</p>
+                  <p className="text-xs mt-1 opacity-90">
+                    No seu sistema LeadForce, configure o envio de leads via <strong>POST</strong> para a URL abaixo,
+                    com o header <code className="bg-orange-100 dark:bg-orange-900 px-1 rounded">x-api-key: LEADFORCE_API_KEY</code>.
+                    Defina também a variável de ambiente <strong>LEADFORCE_API_KEY</strong> no Easypanel.
+                  </p>
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <Label className="text-xs text-orange-700 dark:text-orange-300">URL do Webhook</Label>
+                <div className="flex items-center gap-2">
+                  <code className="flex-1 text-xs bg-white dark:bg-black/40 border border-orange-200 dark:border-orange-800 rounded px-3 py-2 font-mono truncate">
+                    {typeof window !== "undefined" ? window.location.origin : "https://seu-dominio.com"}/api/webhooks/leadforce
+                  </code>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="shrink-0 gap-1.5 border-orange-200 text-orange-700 hover:bg-orange-50 dark:border-orange-800 dark:text-orange-300"
+                    onClick={() => {
+                      navigator.clipboard.writeText(`${window.location.origin}/api/webhooks/leadforce`);
+                      toast({ title: "URL copiada!" });
+                    }}
+                  >
+                    <Copy className="h-3.5 w-3.5" /> Copiar
+                  </Button>
+                </div>
+              </div>
+
+              <div className="space-y-1">
+                <Label className="text-xs text-orange-700 dark:text-orange-300">Payload esperado (JSON)</Label>
+                <pre className="text-[10px] bg-white dark:bg-black/40 border border-orange-200 dark:border-orange-800 rounded px-3 py-2 font-mono overflow-x-auto text-muted-foreground">
+{`{
+  "name": "João Silva",       // ou "nome"
+  "phone": "11999999999",     // ou "telefone"
+  "email": "joao@email.com",
+  "company": "Empresa Ltda",  // ou "empresa" (opcional)
+  "source": "instagram",      // ou "origem" (opcional)
+  "message": "Mensagem custom de boas-vindas" // opcional
+}`}
+                </pre>
+              </div>
+            </div>
+
+            <div className="flex items-center justify-between p-3 rounded-xl border bg-muted/30">
+              <div className="space-y-0.5">
+                <p className="font-bold text-xs">Boas-vindas Automático via WhatsApp</p>
+                <p className="text-[10px] text-muted-foreground">
+                  Envia mensagem ao lead assim que ele chega pelo LeadForce.
+                  Requer WhatsApp (UazAPI) configurado acima.
+                </p>
+              </div>
+              <Switch
+                checked={!!workspaceData?.autoWelcomeEnabled}
+                onCheckedChange={(checked) => setWorkspaceData({ ...workspaceData, autoWelcomeEnabled: checked })}
+              />
             </div>
           </CardContent>
         </Card>
