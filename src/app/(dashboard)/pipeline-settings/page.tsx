@@ -33,9 +33,11 @@ export default function PipelineSettingsPage() {
   const handleSavePipeline = async (pipeline: any) => {
     try {
       setIsLoading(true);
-      // Aqui integraria com uma rota PATCH /api/pipelines/[id]
-      // await axios.patch(`/api/pipelines/${pipeline.id}`, pipeline);
+      await axios.patch(`/api/pipelines/${pipeline.id}`, {
+        stages: pipeline.stages.map((s: any, i: number) => ({ ...s, order: i })),
+      });
       toast({ title: "Sucesso", description: "Pipeline atualizado com sucesso." });
+      fetchPipelines();
     } catch (error) {
       toast({ title: "Erro", description: "Falha ao salvar pipeline.", variant: "destructive" });
     } finally {

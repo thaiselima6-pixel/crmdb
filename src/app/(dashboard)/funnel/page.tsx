@@ -9,19 +9,18 @@ import {
   PointerSensor,
   useSensor,
   useSensors,
-  useDroppable
+  useDroppable,
 } from "@dnd-kit/core";
 import type { DragStartEvent, DragOverEvent, DragEndEvent } from "@dnd-kit/core";
 import {
   SortableContext,
   sortableKeyboardCoordinates,
   verticalListSortingStrategy,
-  useSortable
+  useSortable,
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Mail, Phone, Building2, MessageSquare, Loader2, Trash2 } from "lucide-react";
 import axios from "axios";
@@ -29,14 +28,25 @@ import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 
-const STAGES = [
-  { id: "NEW", title: "Novos Leads", color: "bg-orange-400" },
-  { id: "CONTACTED", title: "Contatados", color: "bg-orange-500" },
-  { id: "QUALIFIED", title: "Qualificados", color: "bg-orange-600" },
-  { id: "PROPOSAL", title: "Proposta", color: "bg-orange-700" },
-  { id: "NEGOTIATION", title: "Negociação", color: "bg-orange-800" },
-  { id: "WON", title: "Ganhos", color: "bg-emerald-500" },
+const STAGE_COLORS = [
+  "bg-orange-400",
+  "bg-orange-500",
+  "bg-orange-600",
+  "bg-orange-700",
+  "bg-orange-800",
+  "bg-emerald-500",
+  "bg-red-400",
+  "bg-blue-500",
+  "bg-purple-500",
+  "bg-pink-500",
 ];
+
+interface Stage {
+  id: string;
+  name: string;
+  order: number;
+  color?: string | null;
+}
 
 interface Lead {
   id: string;
@@ -46,9 +56,11 @@ interface Lead {
   company?: string;
   value: number;
   status: string;
+  stageId?: string | null;
 }
 
 export default function FunnelPage() {
+  const [stages, setStages] = useState<Stage[]>([]);
   const [leads, setLeads] = useState<Record<string, Lead[]>>({});
   const [isLoading, setIsLoading] = useState(true);
   const [activeId, setActiveId] = useState<string | null>(null);
@@ -56,14 +68,8 @@ export default function FunnelPage() {
   const { toast } = useToast();
 
   const sensors = useSensors(
-    useSensor(PointerSensor, {
-      activationConstraint: {
-        distance: 5,
-      },
-    }),
-    useSensor(KeyboardSensor, {
-      coordinateGetter: sortableKeyboardCoordinates,
-    })
+    useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
+    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
   );
 
   useEffect(() => {
@@ -74,13 +80,24 @@ export default function FunnelPage() {
     try {
       setIsLoading(true);
       const response = await axios.get("/api/funnel");
-      const leadsByStatus = response.data.leadsByStatus || [];
-      
+      const { stages: fetchedStages, leads: fetchedLeads } = response.data;
+
+      setStages(fetchedStages);
+
       const groupedLeads: Record<string, Lead[]> = {};
-      STAGES.forEach(stage => {
-        groupedLeads[stage.id] = leadsByStatus.filter((l: any) => l.status === stage.id);
+      fetchedStages.forEach((stage: Stage) => {
+        groupedLeads[stage.id] = [];
       });
-      
+
+      fetchedLeads.forEach((lead: Lead) => {
+        const stageId = lead.stageId;
+        if (stageId && groupedLeads[stageId] !== undefined) {
+          groupedLeads[stageId].push(lead);
+        } else if (fetchedStages.length > 0) {
+          groupedLeads[fetchedStages[0].id].push(lead);
+        }
+      });
+
       setLeads(groupedLeads);
     } catch (error) {
       console.error("Failed to fetch funnel data", error);
@@ -105,20 +122,16 @@ export default function FunnelPage() {
     }
   };
 
-  const updateLeadStatus = async (leadId: string, newStatus: string) => {
+  const updateLeadStage = async (leadId: string, stageId: string) => {
     try {
-      await axios.patch("/api/leads", { id: leadId, status: newStatus });
+      await axios.patch("/api/leads", { id: leadId, stageId });
       toast({
-        title: "Status atualizado",
-        description: `Lead movido para ${STAGES.find(s => s.id === newStatus)?.title}`,
+        title: "Lead movido",
+        description: `Lead atualizado para ${stages.find((s) => s.id === stageId)?.name}`,
       });
     } catch (error) {
-      toast({
-        title: "Erro ao atualizar",
-        description: "Não foi possível mudar o status do lead.",
-        variant: "destructive",
-      });
-      fetchFunnelData(); // Rollback
+      toast({ title: "Erro ao atualizar", description: "Não foi possível mover o lead.", variant: "destructive" });
+      fetchFunnelData();
     }
   };
 
@@ -128,74 +141,74 @@ export default function FunnelPage() {
     setDragOriginContainer(findContainer(id) || null);
   };
 
-const onDragOver = (event: DragOverEvent) => {
-  const { active, over } = event;
-  if (!over) return;
+  const onDragOver = (event: DragOverEvent) => {
+    const { active, over } = event;
+    if (!over) return;
 
-  const activeId = active.id as string;
-  const overId = over.id as string;
+    const activeId = active.id as string;
+    const overId = over.id as string;
 
-  const activeContainer = active.data.current?.sortable.containerId || findContainer(activeId);
-  const overContainer = over.data.current?.sortable.containerId || findContainer(overId);
+    const activeContainer = active.data.current?.sortable.containerId || findContainer(activeId);
+    const overContainer = over.data.current?.sortable.containerId || findContainer(overId);
 
-  if (!activeContainer || !overContainer || activeContainer === overContainer) return;
+    if (!activeContainer || !overContainer || activeContainer === overContainer) return;
 
-  setLeads((prev) => {
-    const activeItems = prev[activeContainer];
-    const overItems = prev[overContainer];
+    setLeads((prev) => {
+      const activeItems = prev[activeContainer] || [];
+      const overItems = prev[overContainer] || [];
+      const activeIndex = activeItems.findIndex((item) => item.id === activeId);
+      const overIndex = overItems.findIndex((item) => item.id === overId);
 
-    const activeIndex = activeItems.findIndex((item) => item.id === activeId);
-    const overIndex = overItems.findIndex((item) => item.id === overId);
+      let newIndex;
+      if (overId in prev) {
+        newIndex = overItems.length + 1;
+      } else {
+        const isBelowLastItem = over && overIndex === overItems.length - 1;
+        const modifier = isBelowLastItem ? 1 : 0;
+        newIndex = overIndex >= 0 ? overIndex + modifier : overItems.length + 1;
+      }
 
-    let newIndex;
-    if (overId in prev) {
-      newIndex = overItems.length + 1;
-    } else {
-      const isBelowLastItem = over && overIndex === overItems.length - 1;
-      const modifier = isBelowLastItem ? 1 : 0;
-      newIndex = overIndex >= 0 ? overIndex + modifier : overItems.length + 1;
+      return {
+        ...prev,
+        [activeContainer]: activeItems.filter((item) => item.id !== active.id),
+        [overContainer]: [
+          ...overItems.slice(0, newIndex),
+          activeItems[activeIndex],
+          ...overItems.slice(newIndex),
+        ],
+      };
+    });
+  };
+
+  const onDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+    setActiveId(null);
+    setDragOriginContainer(null);
+    if (!over || !dragOriginContainer) return;
+
+    const activeId = active.id as string;
+    const overId = over.id as string;
+    const overContainer = over.data.current?.sortable?.containerId ?? overId;
+
+    if (overContainer && overContainer !== dragOriginContainer) {
+      updateLeadStage(activeId, overContainer);
     }
-
-    return {
-      ...prev,
-      [activeContainer]: [...prev[activeContainer].filter((item) => item.id !== active.id)],
-      [overContainer]: [
-        ...prev[overContainer].slice(0, newIndex),
-        prev[activeContainer][activeIndex],
-        ...prev[overContainer].slice(newIndex, prev[overContainer].length)
-      ]
-    };
-  });
-};
-
-const onDragEnd = (event: DragEndEvent) => {
-  const { active, over } = event;
-  setActiveId(null);
-  setDragOriginContainer(null);
-  if (!over || !dragOriginContainer) return;
-
-  const activeId = active.id as string;
-  const overId = over.id as string;
-
-  // Se cair sobre um card: usa containerId do sortable. Se cair sobre coluna vazia: overId já é o id da coluna.
-  const overContainer = over.data.current?.sortable?.containerId ?? overId;
-
-  if (overContainer && overContainer !== dragOriginContainer) {
-    updateLeadStatus(activeId, overContainer);
-  }
-};
+  };
 
   const findContainer = (id: string) => {
     if (id in leads) return id;
-    return Object.keys(leads).find((key) => leads[key].find((item) => item.id === id));
+    return Object.keys(leads).find((key) => leads[key]?.find((item) => item.id === id));
   };
+
+  const calculateColumnTotal = (stageId: string) =>
+    leads[stageId]?.reduce((acc, lead) => acc + Number(lead.value || 0), 0) || 0;
 
   if (isLoading) {
     return (
       <div className="p-8 space-y-8">
         <Skeleton className="h-10 w-64" />
         <div className="flex gap-6 overflow-x-auto pb-4">
-          {[1, 2, 3, 4, 5].map(i => (
+          {[1, 2, 3, 4, 5].map((i) => (
             <div key={i} className="min-w-[300px] space-y-4">
               <Skeleton className="h-12 w-full" />
               <Skeleton className="h-32 w-full" />
@@ -206,10 +219,6 @@ const onDragEnd = (event: DragEndEvent) => {
       </div>
     );
   }
-
-  const calculateColumnTotal = (stageId: string) => {
-    return leads[stageId]?.reduce((acc, lead) => acc + Number(lead.value || 0), 0) || 0;
-  };
 
   return (
     <div className="p-8 h-full flex flex-col gap-8 animate-in fade-in duration-500">
@@ -226,42 +235,42 @@ const onDragEnd = (event: DragEndEvent) => {
         onDragEnd={onDragEnd}
       >
         <div className="flex gap-6 overflow-x-auto pb-8 min-h-[calc(100vh-250px)] scrollbar-thin scrollbar-thumb-muted">
-          {STAGES.map((stage) => (
-            <div key={stage.id} className="min-w-[320px] max-w-[320px] flex flex-col gap-4">
-              <div className="flex items-center justify-between px-2">
-                <div className="flex items-center gap-2">
-                  <div className={cn("h-3 w-3 rounded-full", stage.color)} />
-                  <h3 className="font-bold text-sm uppercase tracking-wider">{stage.title}</h3>
-                  <Badge variant="secondary" className="ml-2 font-bold">
-                    {leads[stage.id]?.length || 0}
-                  </Badge>
+          {stages.map((stage, index) => {
+            const colorClass = STAGE_COLORS[index % STAGE_COLORS.length];
+            return (
+              <div key={stage.id} className="min-w-[320px] max-w-[320px] flex flex-col gap-4">
+                <div className="flex items-center justify-between px-2">
+                  <div className="flex items-center gap-2">
+                    <div className={cn("h-3 w-3 rounded-full", colorClass)} />
+                    <h3 className="font-bold text-sm uppercase tracking-wider">{stage.name}</h3>
+                    <Badge variant="secondary" className="ml-2 font-bold">
+                      {leads[stage.id]?.length || 0}
+                    </Badge>
+                  </div>
+                  <div className="text-xs font-bold text-muted-foreground">
+                    R$ {calculateColumnTotal(stage.id).toLocaleString("pt-BR")}
+                  </div>
                 </div>
-                <div className="text-xs font-bold text-muted-foreground">
-                  R$ {calculateColumnTotal(stage.id).toLocaleString('pt-BR')}
-                </div>
-              </div>
 
-              <DroppableColumn id={stage.id}>
-                <SortableContext
-                  id={stage.id}
-                  items={leads[stage.id]?.map(l => l.id) || []}
-                  strategy={verticalListSortingStrategy}
-                >
-                  {leads[stage.id]?.map((lead) => (
-                    <SortableItem key={lead.id} lead={lead} onDelete={handleDeleteLead} />
-                  ))}
-                </SortableContext>
-              </DroppableColumn>
-            </div>
-          ))}
+                <DroppableColumn id={stage.id}>
+                  <SortableContext
+                    id={stage.id}
+                    items={leads[stage.id]?.map((l) => l.id) || []}
+                    strategy={verticalListSortingStrategy}
+                  >
+                    {leads[stage.id]?.map((lead) => (
+                      <SortableItem key={lead.id} lead={lead} onDelete={handleDeleteLead} />
+                    ))}
+                  </SortableContext>
+                </DroppableColumn>
+              </div>
+            );
+          })}
         </div>
 
         <DragOverlay>
           {activeId ? (
-            <LeadCard 
-              lead={Object.values(leads).flat().find(l => l.id === activeId)!} 
-              isOverlay 
-            />
+            <LeadCard lead={Object.values(leads).flat().find((l) => l.id === activeId)!} isOverlay />
           ) : null}
         </DragOverlay>
       </DndContext>
@@ -276,7 +285,9 @@ function DroppableColumn({ id, children }: { id: string; children: React.ReactNo
       ref={setNodeRef}
       className={cn(
         "rounded-xl p-3 flex-1 flex flex-col gap-3 min-h-[150px] border-2 border-dashed transition-colors",
-        isOver ? "border-orange-400 bg-orange-500/5" : "border-transparent bg-muted/30 hover:border-muted-foreground/20"
+        isOver
+          ? "border-orange-400 bg-orange-500/5"
+          : "border-transparent bg-muted/30 hover:border-muted-foreground/20"
       )}
     >
       {children}
@@ -285,14 +296,9 @@ function DroppableColumn({ id, children }: { id: string; children: React.ReactNo
 }
 
 function SortableItem({ lead, onDelete }: { lead: Lead; onDelete: (id: string) => void }) {
-  const {
-    attributes,
-    listeners,
-    setNodeRef,
-    transform,
-    transition,
-    isDragging
-  } = useSortable({ id: lead.id });
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
+    id: lead.id,
+  });
 
   const style = {
     transform: CSS.Translate.toString(transform),
@@ -307,7 +313,15 @@ function SortableItem({ lead, onDelete }: { lead: Lead; onDelete: (id: string) =
   );
 }
 
-function LeadCard({ lead, isOverlay, onDelete }: { lead: Lead; isOverlay?: boolean; onDelete?: (id: string) => void }) {
+function LeadCard({
+  lead,
+  isOverlay,
+  onDelete,
+}: {
+  lead: Lead;
+  isOverlay?: boolean;
+  onDelete?: (id: string) => void;
+}) {
   const [isGenerating, setIsGenerating] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const { toast } = useToast();
@@ -330,21 +344,16 @@ function LeadCard({ lead, isOverlay, onDelete }: { lead: Lead; isOverlay?: boole
       });
       return;
     }
-
     try {
       setIsGenerating(true);
       const response = await axios.post(`/api/leads/${lead.id}/follow-up`);
       const { message, phone } = response.data;
-
-      const whatsappUrl = `https://wa.me/${phone.replace(/\D/g, '')}?text=${encodeURIComponent(message)}`;
-      window.open(whatsappUrl, '_blank');
-
-      toast({
-        title: "Follow-up gerado!",
-        description: "Mensagem enviada para o WhatsApp.",
-      });
-    } catch (error) {
-      console.error("Follow-up error", error);
+      window.open(
+        `https://wa.me/${phone.replace(/\D/g, "")}?text=${encodeURIComponent(message)}`,
+        "_blank"
+      );
+      toast({ title: "Follow-up gerado!", description: "Mensagem enviada para o WhatsApp." });
+    } catch {
       toast({
         title: "Erro ao gerar follow-up",
         description: "Não foi possível conectar com a IA agora.",
@@ -356,10 +365,12 @@ function LeadCard({ lead, isOverlay, onDelete }: { lead: Lead; isOverlay?: boole
   };
 
   return (
-    <Card className={cn(
-      "border-none shadow-sm hover:shadow-md transition-all cursor-grab active:cursor-grabbing group",
-      isOverlay && "shadow-xl border-2 border-orange-400 rotate-2"
-    )}>
+    <Card
+      className={cn(
+        "border-none shadow-sm hover:shadow-md transition-all cursor-grab active:cursor-grabbing group",
+        isOverlay && "shadow-xl border-2 border-orange-400 rotate-2"
+      )}
+    >
       <CardContent className="p-4 space-y-3">
         <div className="flex items-start justify-between gap-2">
           <div className="min-w-0 flex-1">
@@ -367,7 +378,7 @@ function LeadCard({ lead, isOverlay, onDelete }: { lead: Lead; isOverlay?: boole
               {lead.name}
             </h4>
             <div className="flex items-center gap-1 text-emerald-600 font-bold text-xs mt-0.5">
-              R$ {Number(lead.value || 0).toLocaleString('pt-BR')}
+              R$ {Number(lead.value || 0).toLocaleString("pt-BR")}
             </div>
           </div>
           <div className="flex gap-1 shrink-0">
