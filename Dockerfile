@@ -6,16 +6,19 @@ ARG DATABASE_URL
 ENV DATABASE_URL=$DATABASE_URL
 
 ENV NEXT_TELEMETRY_DISABLED=1
-ENV TAILWIND_DISABLE_LIGHTNINGCSS=1
-ENV LIGHTNINGCSS_FORCE_WASM=1
-ENV TAILWIND_DISABLE_OXIDE=1
 ENV NODE_OPTIONS=--max-old-space-size=2048
 
 # Quebra cache a cada deploy
 RUN echo "build=$GIT_SHA"
 
 COPY package*.json ./
-RUN npm ci --include=dev
+
+# Instala dependências + binários nativos Linux (lightningcss/oxide precisam da versão linux-x64)
+RUN npm ci --include=dev --include=optional
+RUN npm install --no-save \
+    lightningcss-linux-x64-gnu \
+    @tailwindcss/oxide-linux-x64-gnu \
+    2>/dev/null || true
 
 COPY . .
 RUN npx prisma generate || true
@@ -25,9 +28,6 @@ FROM node:20 AS runner
 WORKDIR /app
 ENV NODE_ENV=production
 ENV NEXT_TELEMETRY_DISABLED=1
-ENV TAILWIND_DISABLE_LIGHTNINGCSS=1
-ENV LIGHTNINGCSS_FORCE_WASM=1
-ENV TAILWIND_DISABLE_OXIDE=1
 
 COPY --from=builder /app/node_modules ./node_modules
 COPY --from=builder /app/.next ./.next
