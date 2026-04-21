@@ -2,27 +2,21 @@ FROM node:20 AS builder
 WORKDIR /app
 
 ARG GIT_SHA
+ARG DATABASE_URL
+ENV DATABASE_URL=$DATABASE_URL
 
-# Evita telemetria e desativa bindings nativos problemáticos
 ENV NEXT_TELEMETRY_DISABLED=1
 ENV TAILWIND_DISABLE_LIGHTNINGCSS=1
 ENV LIGHTNINGCSS_FORCE_WASM=1
 ENV TAILWIND_DISABLE_OXIDE=1
+ENV NODE_OPTIONS=--max-old-space-size=2048
 
-ARG DATABASE_URL
-ENV DATABASE_URL=$DATABASE_URL
-
-# Copia package.json e package-lock.json
-COPY package*.json ./
-
-# Quebra cache de dependências a cada deploy (EasyPanel injeta GIT_SHA)
+# Quebra cache a cada deploy
 RUN echo "build=$GIT_SHA"
 
-# Instala exatamente as versões do package-lock (evita Prisma/Next quebrando em updates)
-RUN npm ci --include=dev --include=optional
-RUN LC_VER=$(node -p "require('./package-lock.json').packages['node_modules/lightningcss'].version") && OXIDE_VER=$(node -p "require('./package-lock.json').packages['node_modules/@tailwindcss/oxide'].version") && npm i --no-save "lightningcss-linux-x64-gnu@$LC_VER" "@tailwindcss/oxide-linux-x64-gnu@$OXIDE_VER" && node -e "require('lightningcss-linux-x64-gnu'); require('lightningcss'); require('@tailwindcss/oxide'); console.log('native deps ok')"
+COPY package*.json ./
+RUN npm ci --include=dev
 
-# Copia o código e gera Prisma + build
 COPY . .
 RUN npx prisma generate || true
 RUN npm run build
@@ -35,7 +29,6 @@ ENV TAILWIND_DISABLE_LIGHTNINGCSS=1
 ENV LIGHTNINGCSS_FORCE_WASM=1
 ENV TAILWIND_DISABLE_OXIDE=1
 
-# Copia artefatos de build e runtime
 COPY --from=builder /app/node_modules ./node_modules
 COPY --from=builder /app/.next ./.next
 COPY --from=builder /app/public ./public
