@@ -5,7 +5,15 @@
       "WebSearch",
       "Bash(curl -s -X GET \"https://httpseasyn8n.uazapi.com/send/text\" -H \"Token: 6765464e-9859-479f-8c78-313f0e01d29f\")",
       "WebFetch(domain:github.com)",
-      "Bash(npx tsc:*)"
+      "Bash(npx tsc:*)",
+      "WebFetch(domain:teste-crm.vcps8y.easypanel.host)",
+      "Bash(node -e \"const p = require\\('./package.json'\\); console.log\\('next:', p.dependencies.next\\); console.log\\('node:', process.version\\)\")",
+      "Bash(node -e \"console.log\\(require\\('./node_modules/next/package.json'\\).version\\)\")",
+      "Bash(npm run *)",
+      "Bash(git add *)",
+      "Bash(git commit -m ' *)",
+      "Bash(git push *)",
+      "Bash(git commit -m 'feat: LeadForce to CRM webhook with auto WhatsApp welcome *)"
     ],
     "additionalDirectories": [
       "c:\\Users\\thais\\OneDrive\\Documentos\\SISTEMA\\crmdb\\src\\app\\api\\pipelines"
