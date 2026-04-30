@@ -94,6 +94,8 @@ model Workspace {
   pipelines                Pipeline[]
   socialAccounts           SocialAccount[]
   emailCampaigns           EmailCampaign[]
+  calendarEvents           CalendarEvent[]
+  expenses                 Expense[]
 }
 
 model Pipeline {
@@ -203,8 +205,9 @@ model Client {
   updatedAt   DateTime  @updatedAt
   logo        String?
   workspace   Workspace @relation(fields: [workspaceId], references: [id])
-  invoices    Invoice[]
-  projects    Project[]
+  invoices       Invoice[]
+  projects       Project[]
+  calendarEvents CalendarEvent[]
 }
 
 model Project {
@@ -323,4 +326,31 @@ model VerificationToken {
   expires    DateTime
 
   @@unique([identifier, token])
+}
+
+model CalendarEvent {
+  id          String    @id @default(cuid())
+  title       String
+  date        DateTime
+  description String?
+  priority    String    @default("MEDIUM")
+  clientId    String?
+  workspaceId String
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  client      Client?   @relation(fields: [clientId], references: [id])
+  workspace   Workspace @relation(fields: [workspaceId], references: [id])
+}
+
+model Expense {
+  id          String    @id @default(cuid())
+  name        String
+  amount      Decimal   @db.Decimal(10, 2)
+  category    String    @default("outros")
+  date        DateTime
+  recurring   Boolean   @default(false)
+  workspaceId String
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  workspace   Workspace @relation(fields: [workspaceId], references: [id])
 }
