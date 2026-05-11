@@ -9,8 +9,12 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import {
   TrendingUp, CreditCard, Receipt, MoreHorizontal,
-  Plus, Trash2, Lock, Shuffle,
+  Plus, Trash2, Lock, Shuffle, BarChart2, ChevronLeft, ChevronRight,
 } from "lucide-react";
+import {
+  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip,
+  Legend, ResponsiveContainer, Line, ComposedChart, ReferenceLine,
+} from "recharts";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -66,6 +70,10 @@ export default function FinancePage() {
     date: new Date().toISOString().split("T")[0],
   });
   const [isSavingExpense, setIsSavingExpense] = useState(false);
+  // Annual view state
+  const [annualYear, setAnnualYear]         = useState(new Date().getFullYear());
+  const [annualData, setAnnualData]         = useState<any>(null);
+  const [isLoadingAnnual, setIsLoadingAnnual] = useState(false);
   const { toast } = useToast();
 
   // Date helpers
@@ -115,7 +123,20 @@ export default function FinancePage() {
     }
   };
 
+  const fetchAnnualData = async (year: number) => {
+    try {
+      setIsLoadingAnnual(true);
+      const res = await axios.get(`/api/finance/annual?year=${year}`);
+      setAnnualData(res.data);
+    } catch {
+      toast({ title: "Erro ao carregar dados anuais", variant: "destructive" });
+    } finally {
+      setIsLoadingAnnual(false);
+    }
+  };
+
   useEffect(() => { fetchData(); }, []);
+  useEffect(() => { fetchAnnualData(annualYear); }, [annualYear]);
 
   // Actions
   const sendAutomatedReminders = async () => {
@@ -329,6 +350,9 @@ export default function FinancePage() {
           <TabsTrigger value="variaveis" className="gap-2">
             <Shuffle className="h-3.5 w-3.5" /> Despesas Variáveis
           </TabsTrigger>
+          <TabsTrigger value="anual" className="gap-2">
+            <BarChart2 className="h-3.5 w-3.5" /> Faturamento Anual
+          </TabsTrigger>
         </TabsList>
 
         {/* ── Receitas ──────────────────────────────────────────────────── */}
@@ -399,6 +423,170 @@ export default function FinancePage() {
               <Shuffle className="h-3.5 w-3.5" /> Total variável (mês): {formatCurrency(totalVariable)}
             </div>
           )}
+        </TabsContent>
+
+        {/* ── Faturamento Anual ─────────────────────────────────────────── */}
+        <TabsContent value="anual" className="space-y-6">
+          {/* Year selector */}
+          <div className="flex items-center justify-between">
+            <div>
+              <h2 className="text-lg font-bold">Faturamento Anual</h2>
+              <span className="text-xs text-muted-foreground">Receitas, despesas e lucro mês a mês.</span>
+            </div>
+            <div className="flex items-center gap-1 bg-muted rounded-lg p-1">
+              <Button
+                variant="ghost" size="icon" className="h-7 w-7"
+                disabled={isLoadingAnnual}
+                onClick={() => setAnnualYear((y) => y - 1)}
+              >
+                <ChevronLeft className="h-4 w-4" />
+              </Button>
+              <div className="flex gap-1 px-1">
+                {(annualData?.availableYears?.length > 0
+                  ? annualData.availableYears
+                  : [annualYear]
+                ).map((y: number) => (
+                  <button
+                    key={y}
+                    onClick={() => setAnnualYear(y)}
+                    className={`px-3 py-1 rounded text-sm font-semibold transition-colors ${
+                      y === annualYear
+                        ? "bg-primary text-primary-foreground shadow"
+                        : "text-muted-foreground hover:text-foreground"
+                    }`}
+                  >
+                    {y}
+                  </button>
+                ))}
+              </div>
+              <Button
+                variant="ghost" size="icon" className="h-7 w-7"
+                disabled={isLoadingAnnual || annualYear >= new Date().getFullYear()}
+                onClick={() => setAnnualYear((y) => y + 1)}
+              >
+                <ChevronRight className="h-4 w-4" />
+              </Button>
+            </div>
+          </div>
+
+          {isLoadingAnnual ? (
+            <div className="space-y-3">
+              <Skeleton className="h-72 w-full" />
+              <Skeleton className="h-48 w-full" />
+            </div>
+          ) : annualData ? (
+            <>
+              {/* Annual totals */}
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                {[
+                  { label: "Faturamento Anual",  value: annualData.annualTotals.revenue,          color: "text-primary" },
+                  { label: "Total Fixas",         value: annualData.annualTotals.fixedExpenses,    color: "text-rose-500" },
+                  { label: "Total Variáveis",     value: annualData.annualTotals.variableExpenses, color: "text-orange-500" },
+                  { label: "Lucro Líquido",       value: annualData.annualTotals.netProfit,        color: annualData.annualTotals.netProfit >= 0 ? "text-emerald-500" : "text-rose-500" },
+                ].map((card) => (
+                  <div key={card.label} className="rounded-xl border bg-card p-4 space-y-1">
+                    <p className="text-xs text-muted-foreground">{card.label}</p>
+                    <p className={`text-xl font-bold ${card.color}`}>{formatCurrency(card.value)}</p>
+                  </div>
+                ))}
+              </div>
+
+              {/* Bar Chart */}
+              <div className="rounded-xl border bg-card p-4">
+                <p className="text-sm font-semibold mb-4">Comparativo Mensal — {annualYear}</p>
+                <ResponsiveContainer width="100%" height={300}>
+                  <ComposedChart data={annualData.months} margin={{ top: 4, right: 8, left: 8, bottom: 4 }}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                    <XAxis dataKey="month" tick={{ fontSize: 11 }} />
+                    <YAxis
+                      tickFormatter={(v) => `R$${v >= 1000 ? `${(v / 1000).toFixed(0)}k` : v}`}
+                      tick={{ fontSize: 10 }}
+                      width={52}
+                    />
+                    <Tooltip
+                      formatter={((value: number, name: string) => {
+                        const label = name === "revenue" ? "Faturamento"
+                          : name === "fixedExpenses" ? "Despesas Fixas"
+                          : name === "variableExpenses" ? "Despesas Variáveis"
+                          : "Lucro Líquido";
+                        return [formatCurrency(value), label];
+                      }) as any}
+                      labelStyle={{ fontWeight: "bold" }}
+                      contentStyle={{ fontSize: 12, borderRadius: 8, border: "1px solid hsl(var(--border))" }}
+                    />
+                    <Legend
+                      formatter={(value) =>
+                        value === "revenue" ? "Faturamento"
+                          : value === "fixedExpenses" ? "Fixas"
+                          : value === "variableExpenses" ? "Variáveis"
+                          : "Lucro"
+                      }
+                      wrapperStyle={{ fontSize: 11 }}
+                    />
+                    <ReferenceLine y={0} stroke="hsl(var(--border))" />
+                    <Bar dataKey="revenue"          name="revenue"          fill="hsl(var(--primary))"    radius={[3,3,0,0]} opacity={0.9} />
+                    <Bar dataKey="fixedExpenses"    name="fixedExpenses"    fill="#f43f5e"                radius={[3,3,0,0]} opacity={0.8} />
+                    <Bar dataKey="variableExpenses" name="variableExpenses" fill="#f97316"                radius={[3,3,0,0]} opacity={0.8} />
+                    <Line dataKey="netProfit" name="netProfit" stroke="#10b981" strokeWidth={2} dot={{ r: 3 }} type="monotone" />
+                  </ComposedChart>
+                </ResponsiveContainer>
+              </div>
+
+              {/* Monthly table */}
+              <div className="rounded-xl border bg-card overflow-hidden">
+                <Table>
+                  <TableHeader>
+                    <TableRow className="bg-muted/50">
+                      <TableHead>Mês</TableHead>
+                      <TableHead className="text-right text-primary">Faturamento</TableHead>
+                      <TableHead className="text-right text-rose-500">Fixas</TableHead>
+                      <TableHead className="text-right text-orange-500">Variáveis</TableHead>
+                      <TableHead className="text-right">Total Despesas</TableHead>
+                      <TableHead className="text-right">Lucro Líquido</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {annualData.months.map((m: any, i: number) => {
+                      const isFuture = !m.isPast && new Date(annualYear, m.monthIndex, 1) > new Date();
+                      return (
+                        <TableRow
+                          key={m.month}
+                          className={isFuture ? "opacity-40" : ""}
+                        >
+                          <TableCell className="font-semibold text-sm">
+                            <div className="flex items-center gap-2">
+                              {m.month}
+                              {new Date().getMonth() === i && new Date().getFullYear() === annualYear && (
+                                <span className="text-[9px] bg-primary text-primary-foreground px-1.5 py-0.5 rounded-full font-bold">atual</span>
+                              )}
+                            </div>
+                          </TableCell>
+                          <TableCell className="text-right font-bold text-primary">{formatCurrency(m.revenue)}</TableCell>
+                          <TableCell className="text-right text-rose-500">{formatCurrency(m.fixedExpenses)}</TableCell>
+                          <TableCell className="text-right text-orange-500">{formatCurrency(m.variableExpenses)}</TableCell>
+                          <TableCell className="text-right text-muted-foreground">{formatCurrency(m.totalExpenses)}</TableCell>
+                          <TableCell className={`text-right font-bold ${m.netProfit >= 0 ? "text-emerald-600" : "text-rose-600"}`}>
+                            {isFuture ? "—" : formatCurrency(m.netProfit)}
+                          </TableCell>
+                        </TableRow>
+                      );
+                    })}
+                    {/* Annual total row */}
+                    <TableRow className="border-t-2 bg-muted/30 font-bold">
+                      <TableCell className="font-bold">Total {annualYear}</TableCell>
+                      <TableCell className="text-right text-primary">{formatCurrency(annualData.annualTotals.revenue)}</TableCell>
+                      <TableCell className="text-right text-rose-500">{formatCurrency(annualData.annualTotals.fixedExpenses)}</TableCell>
+                      <TableCell className="text-right text-orange-500">{formatCurrency(annualData.annualTotals.variableExpenses)}</TableCell>
+                      <TableCell className="text-right">{formatCurrency(annualData.annualTotals.fixedExpenses + annualData.annualTotals.variableExpenses)}</TableCell>
+                      <TableCell className={`text-right ${annualData.annualTotals.netProfit >= 0 ? "text-emerald-600" : "text-rose-600"}`}>
+                        {formatCurrency(annualData.annualTotals.netProfit)}
+                      </TableCell>
+                    </TableRow>
+                  </TableBody>
+                </Table>
+              </div>
+            </>
+          ) : null}
         </TabsContent>
       </Tabs>
 
