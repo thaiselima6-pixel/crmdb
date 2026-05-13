@@ -4,23 +4,27 @@ import { WhatsAppService } from "@/lib/whatsapp";
 
 export async function POST(req: Request) {
   try {
-    const apiKey = req.headers.get("x-api-key");
+    const apiKey = req.headers.get("x-api-key") || req.headers.get("X-API-Key");
     if (!apiKey || apiKey !== process.env.LEADFORCE_API_KEY) {
       return new NextResponse("Unauthorized", { status: 401 });
     }
 
     const body = await req.json();
 
-    // Aceita campos em português ou inglês
-    const name    = body.name    || body.nome     || body.contact || "Lead LeadForce";
-    const phone   = body.phone   || body.telefone || body.fone    || null;
-    const email   = body.email   || "sem-email@leadforce.com";
-    const company = body.company || body.empresa  || body.negocio || null;
-    const source  = body.source  || body.origem   || "leadforce";
-    const message = body.message || body.mensagem || null;
+    // Suporta dois formatos:
+    // 1) Flat (chamada direta):  body.name, body.phone, body.email
+    // 2) sync-crm nested:        body.data.company_name, body.data.phone, body.data.contact_email
+    const d = body.data || body;
 
-    // workspaceId pode vir no body; senão usa o primeiro workspace
-    let workspaceId: string = body.workspaceId || "";
+    const name    = d.name    || d.nome     || d.contact_name  || d.company_name || body.nome    || "Lead LeadForce";
+    const phone   = d.phone   || d.telefone || d.fone          || null;
+    const email   = d.email   || d.contact_email               || "sem-email@leadforce.com";
+    const company = d.company || d.empresa  || d.company_name  || d.negocio      || null;
+    const source  = d.source  || d.origem   || d.niche         || "leadforce";
+    const message = d.message || d.mensagem || null;
+
+    // workspaceId pode vir no body raiz, no campo data, ou usa o primeiro workspace
+    let workspaceId: string = body.workspaceId || body.workspace_id || d.workspaceId || "";
     if (!workspaceId) {
       const ws = await prisma.workspace.findFirst({ select: { id: true } });
       if (!ws) return new NextResponse("No workspace found", { status: 400 });
@@ -38,6 +42,18 @@ export async function POST(req: Request) {
       },
     });
     if (!workspace) return new NextResponse("Workspace not found", { status: 404 });
+
+    // Evita duplicata por telefone ou email
+    if (phone) {
+      const existing = await prisma.lead.findFirst({
+        where: { workspaceId, phone },
+        select: { id: true },
+      });
+      if (existing) {
+        console.log(`LEADFORCE_DUPLICATE: phone ${phone} already exists as lead ${existing.id}`);
+        return NextResponse.json({ success: true, leadId: existing.id, duplicate: true });
+      }
+    }
 
     // Coloca o lead no primeiro estágio do pipeline
     const firstStage = await prisma.pipelineStage.findFirst({
