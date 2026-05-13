@@ -13,7 +13,9 @@
       "Bash(git add *)",
       "Bash(git commit -m ' *)",
       "Bash(git push *)",
-      "Bash(git commit -m 'feat: LeadForce to CRM webhook with auto WhatsApp welcome *)"
+      "Bash(git commit -m 'feat: LeadForce to CRM webhook with auto WhatsApp welcome *)",
+      "mcp__claude_ai_Supabase__list_projects",
+      "mcp__claude_ai_Supabase__execute_sql"
     ],
     "additionalDirectories": [
       "c:\\Users\\thais\\OneDrive\\Documentos\\SISTEMA\\crmdb\\src\\app\\api\\pipelines"
