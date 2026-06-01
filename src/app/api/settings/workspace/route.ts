@@ -34,6 +34,12 @@ export async function GET(req: Request) {
         meetingRemindersEnabled: true,
         mayaEnabled: true,
         mayaSystemPrompt: true,
+        kiwifyEnabled: true,
+        kiwifyWebhookSecret: true,
+        kiwifyCartRecoveryEnabled: true,
+        kiwifyMsg1Template: true,
+        kiwifyMsg2Template: true,
+        kiwifyMsg3Template: true,
       }
     });
 
@@ -71,6 +77,12 @@ export async function PATCH(req: Request) {
         meetingRemindersEnabled: body.meetingRemindersEnabled,
         mayaEnabled: body.mayaEnabled,
         mayaSystemPrompt: body.mayaSystemPrompt,
+        kiwifyEnabled: body.kiwifyEnabled,
+        kiwifyWebhookSecret: body.kiwifyWebhookSecret,
+        kiwifyCartRecoveryEnabled: body.kiwifyCartRecoveryEnabled,
+        kiwifyMsg1Template: body.kiwifyMsg1Template,
+        kiwifyMsg2Template: body.kiwifyMsg2Template,
+        kiwifyMsg3Template: body.kiwifyMsg3Template,
       }
     });
 

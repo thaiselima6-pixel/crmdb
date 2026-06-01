@@ -83,6 +83,14 @@ model Workspace {
   autoWelcomeEnabled       Boolean?           @default(true)
   meetingRemindersEnabled  Boolean?           @default(false)
 
+  // Kiwify — Recuperação de Carrinho Abandonado
+  kiwifyEnabled            Boolean?           @default(false)
+  kiwifyWebhookSecret      String?
+  kiwifyCartRecoveryEnabled Boolean?          @default(true)
+  kiwifyMsg1Template       String?            @default("Olá {{customer_name}}! Vi que você se interessou por *{{product_name}}* mas não concluiu a compra. Ainda está disponível para você! Acesse: {{checkout_link}}")
+  kiwifyMsg2Template       String?            @default("{{customer_name}}, seu acesso ao *{{product_name}}* ainda está reservado! Aproveite antes que expire: {{checkout_link}}")
+  kiwifyMsg3Template       String?            @default("Última chance! {{customer_name}}, o *{{product_name}}* ainda está esperando por você. Não perca esta oportunidade: {{checkout_link}}")
+
   aiConversations          AIConversation[]
   clients                  Client[]
   invoices                 Invoice[]
@@ -96,6 +104,7 @@ model Workspace {
   emailCampaigns           EmailCampaign[]
   calendarEvents           CalendarEvent[]
   expenses                 Expense[]
+  kiwifyAbandonedCarts     KiwifyAbandonedCart[]
 }
 
 model Pipeline {
@@ -353,4 +362,25 @@ model Expense {
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
   workspace   Workspace @relation(fields: [workspaceId], references: [id])
+}
+
+model KiwifyAbandonedCart {
+  id              String    @id @default(cuid())
+  workspaceId     String
+  externalId      String
+  customerName    String
+  customerEmail   String
+  customerPhone   String?
+  productName     String
+  productPrice    Decimal   @db.Decimal(10, 2)
+  checkoutUrl     String?
+  status          String    @default("PENDING")
+  abandonedAt     DateTime
+  lastContactAt   DateTime?
+  contactAttempts Int       @default(0)
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  workspace       Workspace @relation(fields: [workspaceId], references: [id])
+
+  @@unique([workspaceId, externalId])
 }

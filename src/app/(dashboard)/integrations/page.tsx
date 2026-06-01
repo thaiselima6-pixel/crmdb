@@ -8,7 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { useToast } from "@/hooks/use-toast";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
-import { Loader2, Facebook, Search as GoogleIcon, Zap, Link2, Unlink, Bot, Copy, CheckCheck, Info, QrCode, Rocket } from "lucide-react";
+import { Loader2, Facebook, Search as GoogleIcon, Zap, Link2, Unlink, Bot, Copy, CheckCheck, Info, QrCode, Rocket, ShoppingCart, ChevronDown, ChevronUp } from "lucide-react";
 import { Textarea } from "@/components/ui/textarea";
 import axios from "axios";
 import { useSearchParams } from "next/navigation";
@@ -24,6 +24,7 @@ function IntegrationsContent() {
   const [qrCodeData, setQrCodeData] = useState<string | null>(null);
   const [isGeneratingQr, setIsGeneratingQr] = useState(false);
   const [qrError, setQrError] = useState<string | null>(null);
+  const [kiwifyTemplatesOpen, setKiwifyTemplatesOpen] = useState(false);
 
   useEffect(() => {
     const success = searchParams.get("success");
@@ -519,6 +520,173 @@ function IntegrationsContent() {
               />
             </div>
           </CardContent>
+        </Card>
+      </section>
+
+      {/* ── SECTION 4: Kiwify — Carrinho Abandonado ─────────────────── */}
+      <section className="flex flex-col gap-4">
+        <div>
+          <h2 className="text-sm font-bold uppercase tracking-widest text-muted-foreground">E-commerce</h2>
+          <p className="text-xs text-muted-foreground mt-0.5">Recuperação automática de vendas via WhatsApp.</p>
+        </div>
+
+        <Card className="border-none shadow-md">
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="h-10 w-10 rounded-full bg-violet-500/10 flex items-center justify-center text-violet-600">
+                  <ShoppingCart className="h-5 w-5" />
+                </div>
+                <div>
+                  <CardTitle>Kiwify — Carrinho Abandonado</CardTitle>
+                  <CardDescription>Recupera vendas enviando mensagens automáticas via WhatsApp.</CardDescription>
+                </div>
+              </div>
+              <Switch
+                checked={!!workspaceData.kiwifyEnabled}
+                onCheckedChange={(checked) => setWorkspaceData({ ...workspaceData, kiwifyEnabled: checked })}
+              />
+            </div>
+          </CardHeader>
+
+          {workspaceData.kiwifyEnabled && (
+            <CardContent className="space-y-5">
+              {/* Instrução de integração */}
+              <div className="bg-violet-50 dark:bg-violet-950/30 border border-violet-100 dark:border-violet-900/50 rounded-lg p-4 space-y-3">
+                <div className="flex items-start gap-2 text-sm text-violet-700 dark:text-violet-300">
+                  <Info className="h-4 w-4 shrink-0 mt-0.5" />
+                  <div>
+                    <p className="font-semibold">Como conectar ao Kiwify</p>
+                    <p className="text-xs mt-1 opacity-90">
+                      No painel Kiwify, acesse <strong>Configurações → Webhooks</strong> e adicione a URL abaixo com o evento{" "}
+                      <code className="bg-violet-100 dark:bg-violet-900 px-1 rounded">AbandonedCart</code>. Também adicione{" "}
+                      <code className="bg-violet-100 dark:bg-violet-900 px-1 rounded">OrderPaid</code> para marcar carrinhos como recuperados.
+                    </p>
+                  </div>
+                </div>
+
+                <div className="space-y-1">
+                  <Label className="text-xs text-violet-700 dark:text-violet-300">URL do Webhook</Label>
+                  <div className="flex items-center gap-2">
+                    <code className="flex-1 text-xs bg-white dark:bg-black/40 border border-violet-200 dark:border-violet-800 rounded px-3 py-2 font-mono truncate">
+                      {typeof window !== "undefined" ? window.location.origin : "https://seu-dominio.com"}/api/webhooks/kiwify?workspaceId={workspaceData.id}
+                    </code>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="shrink-0 gap-1.5 border-violet-200 text-violet-700 hover:bg-violet-50 dark:border-violet-800 dark:text-violet-300"
+                      onClick={() => {
+                        navigator.clipboard.writeText(`${window.location.origin}/api/webhooks/kiwify?workspaceId=${workspaceData.id}`);
+                        toast({ title: "URL copiada!" });
+                      }}
+                    >
+                      <Copy className="h-3.5 w-3.5" /> Copiar
+                    </Button>
+                  </div>
+                </div>
+              </div>
+
+              {/* Configurações */}
+              <div className="space-y-4">
+                <div className="p-3 border rounded-xl bg-muted/30 flex items-center justify-between">
+                  <div className="space-y-0.5">
+                    <p className="font-bold text-xs">Recuperação Automática</p>
+                    <p className="text-[10px] text-muted-foreground">Envia sequência de 3 mensagens ao lead: 30min, 2h e 24h após o abandono.</p>
+                  </div>
+                  <Switch
+                    checked={!!workspaceData.kiwifyCartRecoveryEnabled}
+                    onCheckedChange={(checked) => setWorkspaceData({ ...workspaceData, kiwifyCartRecoveryEnabled: checked })}
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="kiwify-secret" className="text-sm font-semibold">Chave Secreta (opcional)</Label>
+                  <p className="text-xs text-muted-foreground">Se configurada no Kiwify, usamos para validar a autenticidade dos webhooks.</p>
+                  <Input
+                    id="kiwify-secret"
+                    type="password"
+                    placeholder="Chave secreta do webhook Kiwify"
+                    value={workspaceData.kiwifyWebhookSecret || ""}
+                    onChange={(e) => setWorkspaceData({ ...workspaceData, kiwifyWebhookSecret: e.target.value })}
+                  />
+                </div>
+              </div>
+
+              {/* Templates de mensagem (colapsável) */}
+              <div className="border rounded-xl overflow-hidden">
+                <button
+                  type="button"
+                  className="w-full flex items-center justify-between px-4 py-3 bg-muted/30 hover:bg-muted/50 transition-colors text-sm font-semibold"
+                  onClick={() => setKiwifyTemplatesOpen(!kiwifyTemplatesOpen)}
+                >
+                  <span>Mensagens de Recuperação</span>
+                  {kiwifyTemplatesOpen ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+                </button>
+
+                {kiwifyTemplatesOpen && (
+                  <div className="p-4 space-y-4 border-t">
+                    <p className="text-xs text-muted-foreground">
+                      Variáveis disponíveis:{" "}
+                      <code className="bg-muted px-1 rounded">{"{{customer_name}}"}</code>{" "}
+                      <code className="bg-muted px-1 rounded">{"{{product_name}}"}</code>{" "}
+                      <code className="bg-muted px-1 rounded">{"{{product_price}}"}</code>{" "}
+                      <code className="bg-muted px-1 rounded">{"{{checkout_link}}"}</code>
+                    </p>
+
+                    <div className="space-y-2">
+                      <Label className="text-xs font-semibold flex items-center gap-1.5">
+                        <span className="h-5 w-5 rounded-full bg-violet-100 text-violet-700 text-[10px] font-bold flex items-center justify-center">1</span>
+                        30 minutos após abandono
+                      </Label>
+                      <Textarea
+                        className="min-h-[80px] resize-none text-xs font-mono"
+                        value={workspaceData.kiwifyMsg1Template || ""}
+                        onChange={(e) => setWorkspaceData({ ...workspaceData, kiwifyMsg1Template: e.target.value })}
+                        placeholder="Mensagem enviada 30min após o abandono..."
+                      />
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label className="text-xs font-semibold flex items-center gap-1.5">
+                        <span className="h-5 w-5 rounded-full bg-violet-100 text-violet-700 text-[10px] font-bold flex items-center justify-center">2</span>
+                        2 horas após a primeira mensagem
+                      </Label>
+                      <Textarea
+                        className="min-h-[80px] resize-none text-xs font-mono"
+                        value={workspaceData.kiwifyMsg2Template || ""}
+                        onChange={(e) => setWorkspaceData({ ...workspaceData, kiwifyMsg2Template: e.target.value })}
+                        placeholder="Mensagem enviada 2h após a primeira tentativa..."
+                      />
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label className="text-xs font-semibold flex items-center gap-1.5">
+                        <span className="h-5 w-5 rounded-full bg-violet-100 text-violet-700 text-[10px] font-bold flex items-center justify-center">3</span>
+                        24 horas após o abandono (última tentativa)
+                      </Label>
+                      <Textarea
+                        className="min-h-[80px] resize-none text-xs font-mono"
+                        value={workspaceData.kiwifyMsg3Template || ""}
+                        onChange={(e) => setWorkspaceData({ ...workspaceData, kiwifyMsg3Template: e.target.value })}
+                        placeholder="Última mensagem enviada ~24h após o abandono..."
+                      />
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              <div className={`flex items-center gap-2 text-xs px-3 py-2 rounded-lg border ${
+                workspaceData.kiwifyCartRecoveryEnabled
+                  ? "bg-violet-50 border-violet-200 text-violet-700 dark:bg-violet-950/40 dark:border-violet-800 dark:text-violet-400"
+                  : "bg-muted/30 border-border text-muted-foreground"
+              }`}>
+                <div className={`h-2 w-2 rounded-full ${workspaceData.kiwifyCartRecoveryEnabled ? "bg-violet-500 animate-pulse" : "bg-muted-foreground/40"}`} />
+                {workspaceData.kiwifyCartRecoveryEnabled
+                  ? "Recuperação ativa — 3 mensagens automáticas por carrinho abandonado."
+                  : "Recuperação desativada — carrinhos recebidos mas não processados."}
+              </div>
+            </CardContent>
+          )}
         </Card>
       </section>
 
